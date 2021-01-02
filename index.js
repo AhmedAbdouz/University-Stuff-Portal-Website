@@ -6,6 +6,8 @@ const cookieParser = require("cookie-parser");
 const bcryptjs = require('bcryptjs');
 const schedule = require('node-schedule');
 const Router = new express.Router();
+var cors = require('cors');
+
 
 const hr = require("./hr.js");
 const acMember = require("./AcMember.js");
@@ -21,8 +23,9 @@ Router.use(express.json());
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors())
 
-app.use('/hr',HrRouter);
+app.use('/hr', HrRouter);
 
 
 try {
@@ -62,8 +65,8 @@ async function findC() {
   })
 }
 
-app.listen(3000, function () {
-  console.log("Server started at port 3000");
+app.listen(4000, function () {
+  console.log("Server started at port 4000 changed");
 });
 
 
@@ -171,56 +174,69 @@ app.listen(3000, function () {
     })
   })
 
-  app.post("/resetpassword", authanticateToken, async (req, res) => {
+  app.post("/resetpassword", async (req, res) => {
 
-    res.cookie("token", null, {
-      expires: new Date(1999, 11, 24, 10, 33, 30, 0),
-      secure: false, // set to true if your using https
-      httpOnly: true
-    });
-
-    if (!req.body.password || !req.body.confirmPass) {
-      res.send("you have to enter a password and comfirm one");
+    if (!req.body.oldPassword || !req.body.newPassword || !req.body.confirmPass || !req.body.id) {
+      res.send("missingfield(s)");
     }
     else {
-      const pass = req.body.password;
+      const newpass = req.body.newPassword;
       const confirmPass = req.body.confirmPass;
-      if (pass !== confirmPass) {
+      if (newpass !== confirmPass) {
         res.send("Password and confirmpassword don't match");
       }
       else {
         const salt = await bcryptjs.genSalt();
-        const passwordHashed = await bcryptjs.hash(pass, salt);
-        const arr = req.userID.split("-");
+        const Hashedpassword = await bcryptjs.hash(newpass, salt);
+        const arr = req.body.id.split("-");
         if (arr[0] == "hr") {
-          hr.findOneAndUpdate({ id: req.userID, firstLogin: true }, {
-            "$set": {
-              "password": passwordHashed,
-              "firstLogin": false
-            }
-          }, function (err, foundUser) {
+          hr.findOne({ id: req.body.id }, function (err, user) {
             if (err)
-              return res.send(err);
-            if (!foundUser)
-              return res.send("couldn't find this user")
-            else
-              return res.send("successfully updated your password and loading redirected to login page");
-          });
+              res.send(err);
+            else if (!user)
+              res.send("couldn't find the user with this email");
+            else {
+              bcryptjs.compare(req.body.oldPassword, user.password, async function (err, ok) {
+                if (ok) { // Passwords match
+                  const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
+                  res.cookie('token', token, {
+                    secure: false, // set to true if your using https
+                    httpOnly: true,
+                  })
+                  user.password=Hashedpassword;
+                  user.firstLogin=false;
+                  await user.save();
+                  res.send("ok")
+                }
+                else
+                  res.send("wrong oldpassword");
+              });
+            }
+          })
         }
         else {
-          acMember.findOneAndUpdate({ id: req.userID, firstLogin: true }, {
-            "$set": {
-              "password": passwordHashed,
-              "firstLogin": false
-            }
-          }, function (err, foundUser) {
+          acMember.findOne({ id: req.body.id }, function (err, user) {
             if (err)
-              return res.send(err);
-            if (!foundUser)
-              return res.send("couldn't find this user")
-            else
-              return res.send("successfully updated your password and loading redirected to login page");
-          });
+              res.send(err);
+            else if (!user)
+              res.send("couldn't find the user with this email");
+            else {
+              bcryptjs.compare(req.body.oldPassword, user.password, async function (err, ok) {
+                if (ok) { // Passwords match
+                  const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
+                  res.cookie('token', token, {
+                    secure: false, // set to true if your using https
+                    httpOnly: true,
+                  })
+                  user.password=Hashedpassword;
+                  user.firstLogin=false;
+                  await user.save();
+                }
+                else
+                  res.send("wrong oldpassword");
+              });
+            }
+          })
         }
       }
     }
@@ -243,8 +259,9 @@ app.listen(3000, function () {
           else {
             bcryptjs.compare(password, user.password, function (err, ok) {
               if (ok) { // Passwords match
+                res.userID=user.id;
                 if (user.firstLogin) {
-                  res.redirect("You have to change your password loading redirecting to change password .")
+                  res.send({message : "change password",id:user.id})
                 }
                 else {
                   const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
@@ -252,7 +269,7 @@ app.listen(3000, function () {
                     secure: false, // set to true if your using https
                     httpOnly: true,
                   })
-                  res.send("successfull HR login");
+                  res.send({message : "loged in",id:user.id});
                 }
               } else
                 res.send("wrong password or he is not hr");
@@ -269,6 +286,7 @@ app.listen(3000, function () {
           else {
             bcryptjs.compare(password, user.password, function (err, ok) {
               if (ok) { // Passwords match
+                res.userID=user.id;
                 if (user.firstLogin) {
                   res.send("You have to change your password loading redirecting to change password login.")
                 }

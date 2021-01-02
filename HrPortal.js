@@ -10,8 +10,11 @@ const department = require('./department.js');
 const course = require('./course.js');
 const bcryptjs = require('bcryptjs');
 const AcMem = require('./AcMember.js');
+var cors = require('cors');
+
 
 Router.use(express.json());
+Router.use(cors())
 
 const check = (x) => {
   return x.substring(0,2) === 'hr';
