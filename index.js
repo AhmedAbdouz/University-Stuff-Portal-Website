@@ -19,7 +19,7 @@ const HrRouter = require('./HrPortal.js');
 const { json, request } = require("express");
 
 const app = express();
-app.use(cors());
+app.use(cors({credentials:true , origin:"http://localhost:3000"}));
 
 Router.use(express.json()); 
 
@@ -265,10 +265,12 @@ async function findC() {
                 }
                 else {
                   const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
-                  res.cookie('token', token, {
+                  res
+                  .status(202)
+                  .cookie('token', token, {
                     secure: false, // set to true if your using https
                   })
-                  res.send({message : "loged in",id:user.id});
+                  .send({message : "loged in",id:user.id});
                 }
               } else
                 res.send("wrong password or he is not hr");

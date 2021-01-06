@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useHistory } from "react-router-dom";
 import { useLocalStorage } from '../useLocalStorage';
 import ResetPassword from "./ResetPassword";
-axios.defaults.withCredentials = true
+axios.defaults.withCredentials=true;
 
 function Login() {
 
@@ -39,7 +39,7 @@ function Login() {
         event.preventDefault();
         axios.post(`http://localhost:4000/login`, postlogin)
             .then(res => {
-                console.log(res.data);
+                console.log(res.data );
                 if (res.data.message == "change password") {  // needs to change the password and delete his authantication 
                     setUserID(res.data.id);
                     setflag(true);
@@ -47,9 +47,10 @@ function Login() {
                 }   
                 else if (res.data.message == "loged in") {
                     console.log("ok successfull login");
+                    history.push("/profile");
                 }
                 else {
-                    setMessage(res.data.message);
+                    setMessage(res.data);
                 }
             })
             .catch(function (error) {
