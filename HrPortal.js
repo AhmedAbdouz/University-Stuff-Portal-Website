@@ -10,11 +10,8 @@ const department = require('./department.js');
 const course = require('./course.js');
 const bcryptjs = require('bcryptjs');
 const AcMem = require('./AcMember.js');
-var cors = require('cors');
-
 
 Router.use(express.json());
-Router.use(cors())
 
 const check = (x) => {
   return x.substring(0,2) === 'hr';
@@ -591,7 +588,7 @@ Router.post('/addsign',authanticateToken, (req, res) => {
 
 //not tested DB conflict
 Router.get('/stuffmissing', authanticateToken,async (req, res) => {
-
+  console.log("hello");
   if (!check(req.userID))
     res.send("NOTHR");
 

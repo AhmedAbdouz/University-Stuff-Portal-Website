@@ -6,8 +6,7 @@ const cookieParser = require("cookie-parser");
 const bcryptjs = require('bcryptjs');
 const schedule = require('node-schedule');
 const Router = new express.Router();
-var cors = require('cors');
-
+const cors = require('cors');
 
 const hr = require("./hr.js");
 const acMember = require("./AcMember.js");
@@ -19,14 +18,16 @@ const HrRouter = require('./HrPortal.js');
 
 const { json, request } = require("express");
 
-Router.use(express.json());
 const app = express();
+app.use(cors());
+
+Router.use(express.json()); 
+
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors())
 
-app.use('/hr', HrRouter);
-
+app.use("/hr",HrRouter);
 
 try {
   mongoose.connect("mongodb+srv://admin-Ashraf:qwertyuiop@cluster0.oamtr.mongodb.net/staffPortal?retryWrites=true&w=majority", {
@@ -65,9 +66,7 @@ async function findC() {
   })
 }
 
-app.listen(4000, function () {
-  console.log("Server started at port 4000 changed");
-});
+
 
 
 /// Ahmed Part
@@ -160,7 +159,7 @@ app.listen(4000, function () {
   let genertateToken = function (res, id) {
     const token = jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET);
     return res.cookie('token', token, {
-      secure: true, // set to true if your using https
+      secure: false, // set to true if your using https
       httpOnly: true,
     });
   };
@@ -243,6 +242,7 @@ app.listen(4000, function () {
   })
 
   app.post("/login", (req, res) => {
+    console.log("hello hey this the login");
     const email = req.body.email;
     const password = req.body.password;
     const staffType = req.body.staffType;  // 1 => hr  && 2 => acmember
@@ -267,7 +267,6 @@ app.listen(4000, function () {
                   const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
                   res.cookie('token', token, {
                     secure: false, // set to true if your using https
-                    httpOnly: true,
                   })
                   res.send({message : "loged in",id:user.id});
                 }
@@ -292,6 +291,7 @@ app.listen(4000, function () {
                 }
                 else {
                   const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
+                  res.setHeader("Access-Control-Allow-Origin", "*");
                   res.cookie('token', token, {
                     secure: false, // set to true if your using https
                     httpOnly: true,
@@ -317,7 +317,7 @@ app.listen(4000, function () {
     res.send("redirected to login page");
   });
 
-  app.post("/addStuff", authanticateToken, (req, res) => {
+  app.post("/addStuff", (req, res) => {
     // check that this user is hr
     hr.findOne({ id: req.userID }, async (err, result) => {
       if (err) {
@@ -779,15 +779,15 @@ app.listen(4000, function () {
     return d1.getYear() == d2.getYear() && d1.getMonth() == d2.getMonth() && d1.getDate() == d2.getDate();
   }
 
-  function intervalFunc() {
-    console.log('Cant stop me now!');
-    updateDayinfo();
-  }
+  // function intervalFunc() {
+  //   console.log('Cant stop me now!');
+  //   updateDayinfo();
+  // }
 
 
   const salaryJob = schedule.scheduleJob("0 20 10 * *", () => {
-    console.log("jobs runs automaticaly");
-    updateSalary();
+    console.log("jobs runs automaticaly  here");
+    updateSalary(); 
   });
 
 
@@ -821,7 +821,7 @@ app.listen(4000, function () {
     })
   }
 
-  const dayJob = schedule.scheduleJob({ hour: 19 }, () => {
+  const dayJob = schedule.scheduleJob({ hour: 19 , minute:0 }, () => {
     console.log("jobs runs automaticaly");
     updateDayinfo();
   });
@@ -4803,3 +4803,6 @@ app.listen(4000, function () {
 
 
 }
+app.listen(4000, function () {
+  console.log("Server started at port 4000 changed");
+});

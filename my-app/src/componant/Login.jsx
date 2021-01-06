@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import axios from 'axios';
-import {useHistory} from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { useLocalStorage } from '../useLocalStorage';
 import ResetPassword from "./ResetPassword";
-
+axios.defaults.withCredentials = true
 
 function Login() {
 
-    const history=useHistory();
+    const history = useHistory();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -39,23 +39,23 @@ function Login() {
         event.preventDefault();
         axios.post(`http://localhost:4000/login`, postlogin)
             .then(res => {
-                console.log("xasn,ncx,zmcm,zxbcmmzxb,cbxzbm,cbzcb,");
+                console.log(res.data);
                 if (res.data.message == "change password") {  // needs to change the password and delete his authantication 
                     setUserID(res.data.id);
                     setflag(true);
                     setMessage("You need to change your Password");
-                }
-                else if (res.data.message=="loged in " ) {
-                    console.log(res);
-                    history.push("/profile");                
+                }   
+                else if (res.data.message == "loged in") {
+                    console.log("ok successfull login");
                 }
                 else {
-                    setMessage(res.data);
+                    setMessage(res.data.message);
                 }
             })
             .catch(function (error) {
                 console.log(error);
             });
+
     }
 
 
@@ -98,7 +98,7 @@ function Login() {
                 </div>
             </div>
 
-            {flag ? <ResetPassword userID = {userID}/> : null}
+            {flag ? <ResetPassword userID={userID} /> : null}
 
         </div>
     );
