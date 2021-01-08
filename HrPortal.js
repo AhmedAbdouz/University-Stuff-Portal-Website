@@ -255,7 +255,12 @@ Router.delete('/deletedepartment', authanticateToken, async function (req, res) 
       if (err) {
         res.send("ERR Deleteing")
       }
-      res.send("All GOOD")
+      course.updateMany({ "departments": req.body.name }, { $pull: { "departments": req.body.name } }, async (err) => {
+        if (err) {
+          res.send('err');
+        }
+        res.send("All GOOD")
+      });
     });
   })
 
@@ -284,7 +289,7 @@ Router.put('/updatedepartment', authanticateToken, async function (req, res) {
     upd.head = req.body.head;
 
   console.log(upd);
-  console.log(req.body);
+  // console.log(req.body);
   await department.findOneAndUpdate({ name: req.body.name }, upd, async (err, obj) => {
     if (err) {
       res.send("err");
@@ -307,7 +312,17 @@ Router.put('/updatedepartment', authanticateToken, async function (req, res) {
       dps.push(upd.name);
       ff.departments = dps;
       ff.save().then(() => {
-        return res.send("ALL GGOODD")
+
+        course.updateMany({ "departments": req.body.name }, { $pull: { "departments": req.body.name } }, async (err) => {
+          if (err) {
+            res.send('err');
+          }
+          course.updateMany({ name: { $in: obj.courses } }, { $push: { "departments": upd.name } }, async (err) => {
+            if (err)
+              return res.send('err');
+            return res.send("ALL GGOODD")
+          })
+        })
       })
     });
   });
