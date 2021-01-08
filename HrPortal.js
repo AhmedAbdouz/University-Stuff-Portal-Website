@@ -14,7 +14,8 @@ const AcMem = require('./AcMember.js');
 Router.use(express.json());
 
 const check = (x) => {
-  return x.substring(0,2) === 'hr';
+  // return true;
+  return x.substring(0, 2) === 'hr';
 }
 
 //tested
@@ -23,6 +24,7 @@ const check = (x) => {
 //Location adding fucntion
 
 function authanticateToken(req, res, next) {
+  // return next();
   //const token = authHeader && authHeader.split(" ")[1];
   const token = req.cookies.token;
   if (token == null) {
@@ -37,7 +39,7 @@ function authanticateToken(req, res, next) {
   });
 };
 
-Router.post('/addlocation', authanticateToken,async function (req, res) {
+Router.post('/addlocation', authanticateToken, async function (req, res) {
   // console.log("Working");
   // res.send("HERE");
   if (!check(req.userID)) {
@@ -64,7 +66,7 @@ Router.post('/addlocation', authanticateToken,async function (req, res) {
 })
 
 //location deleting
-Router.delete('/deletelocation',authanticateToken, async function (req, res) {
+Router.delete('/deletelocation', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -83,7 +85,7 @@ Router.delete('/deletelocation',authanticateToken, async function (req, res) {
 })
 
 // location update
-Router.put('/updatelocation',authanticateToken, async function (req, res) {
+Router.put('/updatelocation', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -117,7 +119,7 @@ Router.put('/updatelocation',authanticateToken, async function (req, res) {
 //Faculty Section //////////////////////////////////////////////////////////////////////////////////////////
 
 //faculty adding fuction
-Router.post('/addfaculty',authanticateToken, async function (req, res) {
+Router.post('/addfaculty', authanticateToken, async function (req, res) {
   // console.log(req);
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -141,7 +143,7 @@ Router.post('/addfaculty',authanticateToken, async function (req, res) {
 })
 
 //faculty deleting
-Router.delete('/deletefaculty', authanticateToken,async function (req, res) {
+Router.delete('/deletefaculty', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -165,7 +167,7 @@ Router.delete('/deletefaculty', authanticateToken,async function (req, res) {
 })
 
 // faculty update
-Router.put('/updatefaculty', authanticateToken,async function (req, res) {
+Router.put('/updatefaculty', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -194,7 +196,7 @@ Router.put('/updatefaculty', authanticateToken,async function (req, res) {
 //Department Section ///////////////////////////////////////////////////////////////////////////////////////
 
 //Department adding function
-Router.post('/addDepartment', authanticateToken,async function (req, res) {
+Router.post('/addDepartment', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -219,7 +221,7 @@ Router.post('/addDepartment', authanticateToken,async function (req, res) {
     dep.save().then(async () => {       // succfully added
       console.log("New dep");
       const tp = fac.departments;
-      tp.push(dep);
+      tp.push(dep.name);
       console.log(tp)
       await faculty.updateOne({ name: fac.name }, { departments: tp });
       res.send(fac);
@@ -234,7 +236,7 @@ Router.post('/addDepartment', authanticateToken,async function (req, res) {
 
 
 //department deleting
-Router.delete('/deletedepartment', authanticateToken,async function (req, res) {
+Router.delete('/deletedepartment', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -249,7 +251,7 @@ Router.delete('/deletedepartment', authanticateToken,async function (req, res) {
       return;
     }
     console.log(obj);
-    faculty.updateOne({ name: obj.faculty }, { $pull: { "departments": { name: req.body.name } } }, (err) => {
+    faculty.updateOne({ name: obj.faculty }, { $pull: { "departments": req.body.name } }, (err) => {
       if (err) {
         res.send("ERR Deleteing")
       }
@@ -260,7 +262,7 @@ Router.delete('/deletedepartment', authanticateToken,async function (req, res) {
 })
 
 // depratment update 
-Router.put('/updatedepartment', authanticateToken,async function (req, res) {
+Router.put('/updatedepartment', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -289,12 +291,12 @@ Router.put('/updatedepartment', authanticateToken,async function (req, res) {
     }
     if (upd.head) {
       if (obj.head) {
-       await AcMem.updateOne({ id: obj.head }, { head: false });
+        await AcMem.updateOne({ id: obj.head }, { head: false });
       }
-       await AcMem.updateOne({ id: upd.head }, { head: true });
+      await AcMem.updateOne({ id: upd.head }, { head: true });
     }
     // console.log(obj);
-    faculty.updateOne({ name: obj.faculty }, { $pull: { "departments": { name: req.body.name } } }, async (err) => {
+    faculty.updateOne({ name: obj.faculty }, { $pull: { "departments": req.body.name } }, async (err) => {
       if (err) {
         return res.send("ERR")
       }
@@ -302,14 +304,12 @@ Router.put('/updatedepartment', authanticateToken,async function (req, res) {
         upd.faculty = obj.faculty;
       let ff = await faculty.findOne({ name: upd.faculty });
       let dps = ff.departments;
-      let ned = await department.findOne({ name: upd.name });
-      dps.push(ned);
+      dps.push(upd.name);
       ff.departments = dps;
       ff.save().then(() => {
         return res.send("ALL GGOODD")
       })
     });
-
   });
 })
 
@@ -317,7 +317,7 @@ Router.put('/updatedepartment', authanticateToken,async function (req, res) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Course section //////////////////////////////////////////////////////////////////////////////////////////
-Router.post('/addcourse', authanticateToken,async function (req, res) {
+Router.post('/addcourse', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -336,11 +336,11 @@ Router.post('/addcourse', authanticateToken,async function (req, res) {
     dep = result[0];
   });
 
-  // while(!dep){}
-
+  const dds = [];
+  dds.push(req.body.department);
   const cor = new course({
     name: req.body.name,
-    departments: []
+    departments: dds
   });
   // console.log(cor);
   // console.log(dep);
@@ -348,7 +348,7 @@ Router.post('/addcourse', authanticateToken,async function (req, res) {
   cor.save().then(async () => {       // succfully added
     console.log("New course");
     const tp = dep.courses;
-    tp.push(cor);
+    tp.push(cor.name);
     console.log(tp);
     // console.log(tp)
     await department.updateOne({ name: dep.name }, { courses: tp });
@@ -360,7 +360,7 @@ Router.post('/addcourse', authanticateToken,async function (req, res) {
 })
 
 //Course deleting
-Router.delete('/deletecourse',authanticateToken, async function (req, res) {
+Router.delete('/deletecourse', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -376,7 +376,7 @@ Router.delete('/deletecourse',authanticateToken, async function (req, res) {
       res.send("Wrong Course");
       return;
     }
-    department.updateMany({ "courses.name": req.body.name }, { $pull: { "courses": { name: req.body.name } } }, (err) => {
+    department.updateMany({ "courses": req.body.name }, { $pull: { "courses": req.body.name } }, (err) => {
       if (err) {
         res.send("ERR Deleteing")
       }
@@ -387,7 +387,7 @@ Router.delete('/deletecourse',authanticateToken, async function (req, res) {
 })
 
 //course update
-Router.put('/updatecourse', authanticateToken,async function (req, res) {
+Router.put('/updatecourse', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -408,7 +408,7 @@ Router.put('/updatecourse', authanticateToken,async function (req, res) {
     }
 
 
-    await department.updateMany({ "courses.name": req.body.name }, { $pull: { "courses": { name: req.body.name } } }, async (err) => {
+    await department.updateMany({ "courses": req.body.name }, { $pull: { "courses": req.body.name } }, async (err) => {
       if (err) {
         res.send("ERR Updating");
       }
@@ -418,20 +418,27 @@ Router.put('/updatecourse', authanticateToken,async function (req, res) {
 
         let dd = obj2.departments;
         if (req.body.new_department) {
-          await dd.push(departments.findOne({ name: req.body.new_department }));
+          let cc = await departments.findOne({ name: req.body.new_department });
+          if (!cc) {
+            return res.send("ERRnew");
+          }
+
+          cc.courses.push(upd.name);
+          cc.save();
+          dd.push(upd.new_department);
           // add it to the department
         }
 
         if (req.body.remove_department) {
-          dd = dd.filter(el => el.name !== req.body.remove_department);
+          dd = dd.filter(el => el !== req.body.remove_department);
         }
         obj2.departments = dd;
-        for (let i = 0; i < dd.length; i++) {
-          dd[i].courses.push(obj2);
-          await dd[i].save();
-        }
+
         obj2.save().then(() => {
-          return res.send("DONE updating");
+          department.updateMany({ name: { $in: dd } }, { $push: { "courses": upd.name } }, async (err) => {
+
+            return res.send("DONE updating");
+          });
         })
 
       });
@@ -445,7 +452,7 @@ Router.put('/updatecourse', authanticateToken,async function (req, res) {
 
 //tested
 //delete stuff
-Router.delete('/deletestuff', authanticateToken,async (req, res) => {
+Router.delete('/deletestuff', authanticateToken, async (req, res) => {
   if (!check(req.userID))
     res.send("NOTHR");
 
@@ -465,7 +472,7 @@ Router.delete('/deletestuff', authanticateToken,async (req, res) => {
   }
 });
 
-Router.put('/updatestuff', authanticateToken,async (req, res) => {
+Router.put('/updatestuff', authanticateToken, async (req, res) => {
   if (!check(req.userID))
     return res.send("NOTHR");
 
@@ -518,7 +525,7 @@ Router.put('/updatestuff', authanticateToken,async (req, res) => {
 //tested
 //get stuff attendace record.
 
-Router.post('/stuffattendance',authanticateToken, (req, res) => {
+Router.post('/stuffattendance', authanticateToken, (req, res) => {
   if (!check(req.userID))
     res.send("NOTHR");
 
@@ -544,7 +551,7 @@ Router.post('/stuffattendance',authanticateToken, (req, res) => {
 
 //add sign in/out record.
 
-Router.post('/addsign',authanticateToken, (req, res) => {
+Router.post('/addsign', authanticateToken, (req, res) => {
   if (!check(req.userID))
     return res.send("NOTHR");
 
@@ -587,7 +594,7 @@ Router.post('/addsign',authanticateToken, (req, res) => {
 //get stuff with missing hours/days.
 
 //not tested DB conflict
-Router.get('/stuffmissing', authanticateToken,async (req, res) => {
+Router.get('/stuffmissing', authanticateToken, async (req, res) => {
   console.log("hello");
   if (!check(req.userID))
     res.send("NOTHR");
@@ -602,7 +609,7 @@ Router.get('/stuffmissing', authanticateToken,async (req, res) => {
 
 })
 
-Router.put('/updatesalary',authanticateToken, async (req, res) => {
+Router.put('/updatesalary', authanticateToken, async (req, res) => {
   if (!check(req.userID))
     return res.send("NOTHR");
 
