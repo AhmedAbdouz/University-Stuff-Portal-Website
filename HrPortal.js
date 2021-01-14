@@ -10,6 +10,7 @@ const department = require('./department.js');
 const course = require('./course.js');
 const bcryptjs = require('bcryptjs');
 const AcMem = require('./AcMember.js');
+const e = require('express');
 
 Router.use(express.json());
 
@@ -46,8 +47,8 @@ Router.post('/addlocation', authanticateToken, async function (req, res) {
     res.send("Not HR");
     return;
   }
-  if (!req.body.name) {
-    res.send("invalid data");
+  if (!req.body.name || !req.body.capcity) {
+    res.send("You are missing required data");
     return;
   }
   const loc = new locations({
@@ -55,12 +56,12 @@ Router.post('/addlocation', authanticateToken, async function (req, res) {
     capcity: req.body.capcity,
     type: req.body.type
   });
-
+  // console.log(loc);
   loc.save().then(() => {       // succfully added
     console.log("New loc");
-    return res.send(loc);
+    return res.send("New location added");
   }).catch(() => {              // error while adding 
-    console.log("err");
+    // console.log("err");
     return res.send("ERR");
   })
 })
@@ -73,13 +74,13 @@ Router.delete('/deletelocation', authanticateToken, async function (req, res) {
     return;
   }
   if (!req.body.name) {
-    res.send("invalid data");
+    res.send("You are missing required data");
     return;
   }
   await locations.deleteOne({ name: req.body.name }).then(() => {
-    return res.send("deleted");
+    return res.send("Deleted");
   }).catch((err) => {
-    return res.send("cannot delete");
+    return res.send("Err");
   })
 
 })
@@ -92,7 +93,7 @@ Router.put('/updatelocation', authanticateToken, async function (req, res) {
     return;
   }
   if (!req.body.name) {
-    res.send("invalid data");
+    res.send("You are missing requierd data");
     return;
   }
   let upd = {};
@@ -106,9 +107,9 @@ Router.put('/updatelocation', authanticateToken, async function (req, res) {
 
   console.log(upd);
   await locations.findOneAndUpdate({ name: req.body.name }, upd).then(() => {
-    res.send("updated");
+    res.send("Updated");
   }).catch((err) => {
-    res.send("cannot update");
+    res.send("Cannot update");
   })
 
 })
@@ -120,7 +121,7 @@ Router.put('/updatelocation', authanticateToken, async function (req, res) {
 
 //faculty adding fuction
 Router.post('/addfaculty', authanticateToken, async function (req, res) {
-  // console.log(req);
+  console.log(req);
   if (!check(req.userID)) {
     res.send("Not HR");
     return;
@@ -135,7 +136,7 @@ Router.post('/addfaculty', authanticateToken, async function (req, res) {
 
   fac.save().then(() => {       // succfully added
     console.log("New fac");
-    res.send(fac);
+    res.send("New faculty added.");
   }).catch(() => {              // error while adding 
     console.log("err");
     res.send("ERR");
@@ -149,12 +150,13 @@ Router.delete('/deletefaculty', authanticateToken, async function (req, res) {
     res.send("Not HR");
     return;
   }
+  console.log(req.body);
   if (!req.body.name)
-    return res.send("Invalid data");
+    return res.send("You are missing required data");
 
   const fac = await faculty.findOne({ name: req.body.name });
   fac.remove().then(() => {
-    res.send('deleted');
+    res.send('Deleted');
   }).catch((err) => {
     res.send('err');
   })
@@ -174,16 +176,16 @@ Router.put('/updatefaculty', authanticateToken, async function (req, res) {
     return;
   }
   if (!req.body.name)
-    return res.send("Invalid data");
+    return res.send("You are missing required data");
   let upd = {};
   upd.name = req.body.name;
   if (req.body.new_name)
     upd.name = req.body.new_name;
 
-  console.log(upd.name);
+  // console.log(upd.name);
   await faculty.findOneAndUpdate({ name: req.body.name }, upd).then(() => {
     department.updateMany({ faculty: req.body.name }, { faculty: upd.name }).then(() => {
-      res.send("updated");
+      res.send("Updated");
     });
   }).catch((err) => {
     res.send("cannot update");
@@ -203,12 +205,12 @@ Router.post('/addDepartment', authanticateToken, async function (req, res) {
     return;
   }
   if (!req.body.name || !req.body.faculty)
-    return res.send("Invalid data");
+    return res.send("You are missing required data");
 
   let fac;
   await faculty.find({ name: req.body.faculty }, (err, result) => {
-    if (result.length === 0 || err) {
-      res.send("NO fac");// no faculty 
+    if (err || result.length === 0) {
+      res.send("Please insert right faculty");// no faculty 
       return;
     }
     fac = result[0];
@@ -224,9 +226,9 @@ Router.post('/addDepartment', authanticateToken, async function (req, res) {
       tp.push(dep.name);
       console.log(tp)
       await faculty.updateOne({ name: fac.name }, { departments: tp });
-      res.send(fac);
+      res.send("New department added");
     }).catch(() => {              // error while adding 
-      console.log("err");
+      // console.log("err");
       res.send("ERR");
     })
   })
@@ -243,14 +245,14 @@ Router.delete('/deletedepartment', authanticateToken, async function (req, res) 
     return;
   }
   if (!req.body.name)
-    return res.send("Invalid data");
+    return res.send("You are missing required data");
 
   await department.findOneAndRemove({ name: req.body.name }, async (err, obj) => {
-    if (err) {
-      res.send("Wrong Department");
+    if (err || !obj) {
+      res.send("Worng Department Name");
       return;
     }
-    console.log(obj);
+    // console.log(obj);
     faculty.updateOne({ name: obj.faculty }, { $pull: { "departments": req.body.name } }, (err) => {
       if (err) {
         res.send("ERR Deleteing")
@@ -259,7 +261,7 @@ Router.delete('/deletedepartment', authanticateToken, async function (req, res) 
         if (err) {
           res.send('err');
         }
-        res.send("All GOOD")
+        res.send("Deleted")
       });
     });
   })
@@ -274,23 +276,24 @@ Router.put('/updatedepartment', authanticateToken, async function (req, res) {
     return;
   }
   if (!req.body.name)
-    return res.send("Invalid input");
+    return res.send("You are missing required data");
 
   let upd = {};
 
   if (req.body.new_name)
     upd.name = req.body.new_name;
-  else upd.name = req.bod.name;
+  else upd.name = req.body.name;
 
   if (req.body.new_faculty)
     upd.faculty = req.body.new_faculty;
+
 
   if (req.body.head)
     upd.head = req.body.head;
 
   console.log(upd);
   // console.log(req.body);
-  await department.findOneAndUpdate({ name: req.body.name }, upd, async (err, obj) => {
+  await department.findOne({ name: req.body.name }, async (err, obj) => {
     if (err) {
       res.send("err");
     }
@@ -300,7 +303,7 @@ Router.put('/updatedepartment', authanticateToken, async function (req, res) {
       }
       await AcMem.updateOne({ id: upd.head }, { head: true });
     }
-    // console.log(obj);
+    console.log(obj);
     faculty.updateOne({ name: obj.faculty }, { $pull: { "departments": req.body.name } }, async (err) => {
       if (err) {
         return res.send("ERR")
@@ -320,7 +323,12 @@ Router.put('/updatedepartment', authanticateToken, async function (req, res) {
           course.updateMany({ name: { $in: obj.courses } }, { $push: { "departments": upd.name } }, async (err) => {
             if (err)
               return res.send('err');
-            return res.send("ALL GGOODD")
+            department.updateOne({ name: req.body.name }, upd, (err) => {
+              if (err)
+                return res.send('err');
+              return res.send("Updated")
+
+            })
           })
         })
       })
@@ -340,12 +348,12 @@ Router.post('/addcourse', authanticateToken, async function (req, res) {
   }
 
   if (!req.body.name || !req.body.department)
-    return res.send("Invalid data");
+    return res.send("you are missing required data");
 
   let dep;
   await department.find({ name: req.body.department }, (err, result) => {
-    if (result.length === 0 || err) {
-      res.send("NO dep");// no dep 
+    if (err || result.length === 0) {
+      res.send("please entre right department");// no dep 
       return;
     }
     dep = result[0];
@@ -367,7 +375,7 @@ Router.post('/addcourse', authanticateToken, async function (req, res) {
     console.log(tp);
     // console.log(tp)
     await department.updateOne({ name: dep.name }, { courses: tp });
-    return res.send(dep);
+    return res.send("New course added");
   }).catch(() => {              // error while adding 
     console.log("err");
     return res.send("ERR");
@@ -383,19 +391,19 @@ Router.delete('/deletecourse', authanticateToken, async function (req, res) {
   }
 
   if (!req.body.name)
-    return res.send("Invalid data");
+    return res.send("You are missing required data");
 
 
   await course.findOneAndRemove({ name: req.body.name }, async (err, obj) => {
-    if (err) {
-      res.send("Wrong Course");
+    if (err || !obj) {
+      res.send("Wrong Course Name");
       return;
     }
     department.updateMany({ "courses": req.body.name }, { $pull: { "courses": req.body.name } }, (err) => {
       if (err) {
         res.send("ERR Deleteing")
       }
-      res.send("All GOOD")
+      res.send("Deleted")
     });
   })
 
@@ -409,11 +417,11 @@ Router.put('/updatecourse', authanticateToken, async function (req, res) {
     return;
   }
   if (!req.body.name)
-    return res.send("Invalid input");
+    return res.send("You are missimg required data");
   let upd = {};
 
   if (!req.body.new_name)
-    upd.name = req.bod.name;
+    upd.name = req.body.name;
   else upd.name = req.body.new_name;
 
 
@@ -433,14 +441,14 @@ Router.put('/updatecourse', authanticateToken, async function (req, res) {
 
         let dd = obj2.departments;
         if (req.body.new_department) {
-          let cc = await departments.findOne({ name: req.body.new_department });
+          let cc = await department.findOne({ name: req.body.new_department });
           if (!cc) {
             return res.send("ERRnew");
           }
-
+          console.log(req.body.new_department);
           cc.courses.push(upd.name);
           cc.save();
-          dd.push(upd.new_department);
+          dd.push(req.body.new_department);
           // add it to the department
         }
 
@@ -452,7 +460,7 @@ Router.put('/updatecourse', authanticateToken, async function (req, res) {
         obj2.save().then(() => {
           department.updateMany({ name: { $in: dd } }, { $push: { "courses": upd.name } }, async (err) => {
 
-            return res.send("DONE updating");
+            return res.send("Updated");
           });
         })
 
@@ -471,18 +479,21 @@ Router.delete('/deletestuff', authanticateToken, async (req, res) => {
   if (!check(req.userID))
     res.send("NOTHR");
 
+  if (!req.body.id) {
+    return res.send('You are missing required data');
+  }
   const id = req.body.id;
   if (id.substring(0, 2) === 'hr') {//hr
     hr.deleteOne({ id: req.body.id }, (err) => {
       if (err)
         res.send("err");
-      res.send("Done");
+      res.send("Deleted");
     });
   } else {
     Ac.deleteOne({ id: req.body.id }, (err) => {
       if (err)
         res.send("err");
-      res.send("Done");
+      res.send("Deleted");
     });
   }
 });
@@ -493,7 +504,7 @@ Router.put('/updatestuff', authanticateToken, async (req, res) => {
 
   const id = req.body.id;
   if (!id)
-    return res.send("BAD DATA");
+    return res.send("You are missing required data");
 
   let upd = {};
   if (req.body.name)
@@ -511,8 +522,8 @@ Router.put('/updatestuff', authanticateToken, async (req, res) => {
   if (req.body.annual_leave_balance)
     upd.annual_leave_balance = req.body.annual_leave_balance;
 
-  if (req.body.annual_leave_balance)
-    upd.annual_leave_balance = req.body.annual_leave_balance;
+  // if (req.body.annual_leave_balance)
+  //   upd.annual_leave_balance = req.body.annual_leave_balance;
 
   if (req.body.password) {
     const salt = await bcryptjs.genSalt();
@@ -526,13 +537,13 @@ Router.put('/updatestuff', authanticateToken, async (req, res) => {
     hr.updateOne({ id: req.body.id }, upd, (err) => {
       if (err)
         return res.send("err");
-      return res.send("Done");
+      return res.send("Updated");
     });
   } else {
     Ac.updateOne({ id: req.body.id }, upd, (err) => {
       if (err)
         return res.send("err");
-      return res.send("Done");
+      return res.send("Updated");
     });
   }
 });
@@ -544,20 +555,29 @@ Router.post('/stuffattendance', authanticateToken, (req, res) => {
   if (!check(req.userID))
     res.send("NOTHR");
 
+  if (!req.body.id) {
+    return res.send("You are missing required data");
+  }
   const id = req.body.id;
 
   if (id.substring(0, 2) === 'hr') {//hr
     hr.findOne({ id: req.body.id }, (err, obj) => {
-      if (err) {
-        return res.send("err");
+      if (!obj || err) {
+        return res.send("Worng User ID");
       }
-      res.send(obj.attendance);
+      let ret = [];
+      ret.push(obj.id);
+      ret.push(obj.dayinfo);
+      return res.send(ret);
     });
   } else {
     Ac.findOne({ id: req.body.id }, (err, obj) => {
-      if (err)
+      if (!obj || err)
         return res.send("err");
-      res.send(obj.attendance);
+      let ret = [];
+      ret.push(obj.id);
+      ret.push(obj.dayinfo);
+      return res.send(ret);
     });
   }
 
@@ -574,7 +594,7 @@ Router.post('/addsign', authanticateToken, (req, res) => {
   let rec = {};
   if (!id || req.userID === id)/// or with it's the same HR
     return res.send("ERR");
-
+  console.log(req.body.date);
   rec.date = req.body.date;
   rec.type = req.body.type;
   if (!rec.date || !rec.type)
@@ -583,11 +603,11 @@ Router.post('/addsign', authanticateToken, (req, res) => {
   console.log(rec);
   if (id.substring(0, 2) === 'hr') {//hr
     hr.findOne({ id: req.body.id }, (err, obj) => {
-      if (err)
+      if (!obj || err)
         return res.send("err");
       obj.attendance.push(rec);
       obj.save().then(() => {
-        res.send("DONE");
+        res.send("New record Added");
       })
       // res.send(obj.attendance);
     });
@@ -608,19 +628,30 @@ Router.post('/addsign', authanticateToken, (req, res) => {
 
 //get stuff with missing hours/days.
 
-//not tested DB conflict
+// not tested  conflict
 Router.get('/stuffmissing', authanticateToken, async (req, res) => {
-  console.log("hello");
   if (!check(req.userID))
     res.send("NOTHR");
 
   let ans = {};
+  let sol = [];
 
-  ans.HRs = await hr.find({ $or: [{ hours: { $gte: 0 } }, { missingdays: { $gte: 0 } }] });
+  ans.HRs = await hr.find({ $or: [{ hours: { $gt: 0 } }, { missingdays: { $gt: 0 } }] });
 
-  ans.Acs = await Ac.find({ $or: [{ hours: { $gte: 0 } }, { missingdays: { $gte: 0 } }] });
+  ans.HRs = ans.HRs.map((el) => {
+    sol.push({ id: el.id, hours: el.hours, missingdays: el.missingdays });
+    return
+  })
 
-  res.send(ans);
+  ans.Acs = await Ac.find({ $or: [{ hours: { $gt: 0 } }, { missingdays: { $gt: 0 } }] });
+
+  ans.Acs = ans.Acs.map((el) => {
+    sol.push({ id: el.id, hours: el.hours, missingdays: el.missingdays });
+    return
+  })
+  console.log(sol);
+
+  return res.send(sol);
 
 })
 
@@ -628,21 +659,22 @@ Router.put('/updatesalary', authanticateToken, async (req, res) => {
   if (!check(req.userID))
     return res.send("NOTHR");
 
+
   const id = req.body.id;
   let rec = {};
   if (!id)/// or with it's the same HR
-    return res.send("ERR");
+    return res.send("You are missing required data");
 
   rec.salary = req.body.salary;
   if (!rec.salary)
-    return res.send("ERR");
+    return res.send("You are missing required data");
   if (id.substring(0, 2) === 'hr') {//hr
     hr.findOne({ id: req.body.id }, (err, obj) => {
       if (err)
         return res.send("err");
       obj.salary = rec.salary;
       obj.save().then(() => {
-        res.send("DONE");
+        res.send("Updated");
       })
       // res.send(obj.attendance);
     });
@@ -652,12 +684,11 @@ Router.put('/updatesalary', authanticateToken, async (req, res) => {
         return res.send("err");
       obj.salary = rec.salary;
       obj.save().then(() => {
-        res.send("DONE");
+        res.send("Updated");
       })
       // res.send(obj.attendance);
     });
   }
-
 
 })
 
