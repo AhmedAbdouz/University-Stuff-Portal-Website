@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const department = require("./department");
 const schema = mongoose.Schema({
 
   departments: {
@@ -14,9 +14,11 @@ const schema = mongoose.Schema({
 })
 
 schema.post('remove', (doc) => {
-  console.log(doc._id);
+  // console.log(doc._id);
   department.updateMany({ faculty: doc.name }, { faculty: 'UNASSIGNED' }).then(() => {
-  });
+  }).catch(()=>{
+
+  })
 
 })
 

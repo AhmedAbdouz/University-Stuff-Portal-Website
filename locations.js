@@ -10,7 +10,6 @@ const schema = mongoose.Schema({
 
     capcity: {
         type: Number,
-        required: true
     },
     type: {
         type: String,
