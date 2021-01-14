@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
 import NavBar from "./NavBar";
-import {useHistory} from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 export default function App() {
-    const history=useHistory();
+    const history = useHistory();
 
     let [name, setName] = useState("");
     let [email, setEmail] = useState("");
     let [salary, setSalary] = useState("");
     let [gender, setGender] = useState("");
+    let [staffType, setStaff] = useState("");
+    let [message, setMessage] = useState("");
 
     function handleChange(event) {
         if (event.target.name == "email")
@@ -21,46 +23,51 @@ export default function App() {
     };
 
     function handleRadio(e) {
-        setGender(e.target.value);
+        if (e.target.name == 'gender')
+            setGender(e.target.value);
+        else {
+            setStaff(e.target.value);
+        }
     }
 
     let postaddsuff = {
-        name:name,
-        email:email,
-        salary:salary,
-        gender:gender
+        name: name,
+        email: email,
+        salary: salary,
+        gender: gender,
+        staffType: staffType
     }
 
     function handleAddStaff(event) {
         event.preventDefault();
-        console.log("hello how are you?");
-        history.push("/login");
+        // console.log("hello how are you?");
+        // history.push("/login");
 
-        // axios.post(`http://localhost:4000/addStuff`, postaddsuff)
-        //     .then(res => {
-        //         console.log(res.data);
-        //         // if (res.data.message == "change password") {  // needs to change the password and delete his authantication 
-        //         //     setUserID(res.data.id);
-        //         //     setflag(true);
-        //         //     setMessage("You need to change your Password");
-        //         // }   
-        //         // else if (res.data.message == "loged in") {
-        //         //     console.log(res);
-        //         // }
-        //         // else {
-        //         //     setMessage(res.data.message);
-        //         // }
-        //     })
-        //     .catch(function (error) {
-        //         console.log(error);
-        //     });
+        axios.post(`http://localhost:4000/addStuff`, postaddsuff)
+            .then(res => {
+                setMessage(res.data);
+                // if (res.data.message == "change password") {  // needs to change the password and delete his authantication 
+                //     setUserID(res.data.id);
+                //     setflag(true);
+                //     setMessage("You need to change your Password");
+                // }   
+                // else if (res.data.message == "loged in") {
+                //     console.log(res);
+                // }
+                // else {
+                //     setMessage(res.data.message);
+                // }
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
 
     }
 
     return (
         <div className="App">
             <NavBar />
-            <form onSubmit = {handleAddStaff}>
+            <form onSubmit={handleAddStaff}>
                 <div className="row">
                     <div className="col-lg">
                         <input type="text" className="form-control" name="name" placeholder="Name" value={name} onChange={handleChange} />
@@ -93,12 +100,21 @@ export default function App() {
                     <input type="radio" id="female" name="gender" value="female" onChange={handleRadio} />
                     <label >Female</label>
                 </div>
+                <div>
+                    <p style={{ margin: 10 }} > Please select your gender:</p>
+                    <input type="radio" id="HR" name="type" value="1" onChange={handleRadio} />
+                    <label >HR</label>
+                    <br />
+                    <input type="radio" id="Ac" name="type" value="2" onChange={handleRadio} />
+                    <label >Academic Member</label>
+                </div>
                 <br />
                 <input
                     className="btn btn-primary"
                     type="submit"
                     value="Submit"
-                />
+                /> 
+                 <p className="message">{message}</p>
             </form>
         </div>
     );
