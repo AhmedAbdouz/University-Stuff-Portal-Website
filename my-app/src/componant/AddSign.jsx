@@ -63,10 +63,13 @@ export default function App() {
                         <input type="text" className="form-control" name="id" placeholder="Stuff member id" value={id} onChange={handleChange} />
                     </div>
                 </div>
-                <div className="row">
-                    <div className="col-lg">
-                        <input type="text" className="form-control" name="type" placeholder="Record type" value={type} onChange={handleChange} />
-                    </div>
+                <div>
+                    <p style={{ margin: 10 }} > Please select record type:</p>
+                    <input type="radio" id="in" name="type" value="in" onChange={handleChange} />
+                    <label >in</label>
+                    <br />
+                    <input type="radio" id="out" name="type" value="out" onChange={handleChange} />
+                    <label >out</label>
                 </div>
                 <div className="row">
                     <div className="col-lg">

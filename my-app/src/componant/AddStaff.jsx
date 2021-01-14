@@ -101,7 +101,7 @@ export default function App() {
                     <label >Female</label>
                 </div>
                 <div>
-                    <p style={{ margin: 10 }} > Please select your gender:</p>
+                    <p style={{ margin: 10 }} > Please select stuff type:</p>
                     <input type="radio" id="HR" name="type" value="1" onChange={handleRadio} />
                     <label >HR</label>
                     <br />

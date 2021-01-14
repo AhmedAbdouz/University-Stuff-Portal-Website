@@ -61,10 +61,16 @@ export default function App() {
                         <input type="number" className="form-control" name="capcity" placeholder="Capcity" value={capcity} onChange={handleChange} />
                     </div>
                 </div>
-                <div className="row">
-                    <div className="col-lg">
-                        <input type="text" className="form-control" name="type" placeholder="Type" value={type} onChange={handleChange} />
-                    </div>
+                <div>
+                    <p style={{ margin: 10 }} > Please select location type:</p>
+                    <input type="radio" id="office" name="type" value="office" onChange={handleChange} />
+                    <label >office</label>
+                    <br />
+                    <input type="radio" id="room" name="type" value="room" onChange={handleChange} />
+                    <label >room</label>
+                    <br />
+                    <input type="radio" id="hall" name="type" value="hall" onChange={handleChange} />
+                    <label >hall</label>
                 </div>
                 <br />
                 <input
