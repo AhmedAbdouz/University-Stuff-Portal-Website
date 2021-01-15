@@ -296,7 +296,7 @@ Router.put('/updatedepartment', authanticateToken, async function (req, res) {
   console.log(upd);
   // console.log(req.body);
   await department.findOne({ name: req.body.name }, async (err, obj) => {
-    if (err) {
+    if (!obj || err) {
       res.send("err");
     }
     if (upd.head) {
@@ -397,7 +397,7 @@ Router.post('/deletecourse', authanticateToken, async function (req, res) {
 
 
   await course.findOneAndRemove({ name: req.body.name }, async (err, obj) => {
-    if (err || !obj) {
+    if (!obj || err) {
       res.send("Wrong Course Name");
       return;
     }
@@ -428,7 +428,7 @@ Router.put('/updatecourse', authanticateToken, async function (req, res) {
 
 
   await course.findOneAndUpdate({ name: req.body.name }, upd, async (err, obj) => {
-    if (err) {
+    if (!obj || err) {
       return res.send("err");
     }
 
@@ -438,7 +438,7 @@ Router.put('/updatecourse', authanticateToken, async function (req, res) {
         res.send("ERR Updating");
       }
       await course.findOne({ name: upd.name }, async (err, obj2) => {
-        if (err)
+        if (!obj2 || err)
           return res.send("ERR upd");
 
         let dd = obj2.departments;
@@ -608,17 +608,24 @@ Router.post('/addsign', authanticateToken, (req, res) => {
       if (!obj || err)
         return res.send("err");
       obj.attendance.push(rec);
+
       obj.save().then(() => {
+        if (!findRecord(rec.date, new Date())) {
+          updateDayinfo(rec.date, req.body.id);
+        }
         res.send("New record Added");
       })
       // res.send(obj.attendance);
     });
   } else {
     Ac.findOne({ id: req.body.id }, (err, obj) => {
-      if (err)
+      if (!obj || err)
         return res.send("err");
       obj.attendance.push(rec);
       obj.save().then(() => {
+        if (!findRecord(rec.date, new Date())) {
+          updateDayinfo(rec.date, req.body.id);
+        }
         res.send("DONE");
       })
       // res.send(obj.attendance);
@@ -693,6 +700,46 @@ Router.put('/updatesalary', authanticateToken, async (req, res) => {
   }
 
 })
+
+function findRecord(d1, d2) {
+  return d1.getDay() == d2.getDay() && d1.getMonth() == d2.getMonth() && d1.getFullYear() == d2.getFullYear();
+}
+
+function updateDayinfo(date, id) {
+  const arr = id.split("-");
+  if (arr[0] == "hr") {
+    hr.findOne({ id: id }, async (err, foundUser) => {
+      if (err)
+        console.log(err);
+      else {
+        for (let idx = 0; idx < foundUser.dayOff; idx++) {
+          if (findRecord(date, foundUser.dayinfo[idx].date)) {
+            foundUser.dayinfo.splice(idx, idx);
+            foundUser.dayinfo.push(findrecordfordayinfo());
+            foundUser.dayinfo.sort();
+            await foundUser.save();
+          }
+        }
+      }
+    })
+  }
+  else {
+    acMember.findOne({ id: id }, async (err, foundUser) => {
+      if (err)
+        console.log(err);
+      else {
+        for (let idx = 0; idx < foundUser.dayOff; idx++) {
+          if (findRecord(date, foundUser.dayinfo[idx].date)) {
+            foundUser.dayinfo.splice(idx, idx);
+            foundUser.dayinfo.push(findrecordfordayinfo());
+            foundUser.dayinfo.sort();
+            await foundUser.save();
+          }
+        }
+      }
+    })
+  }
+}
 
 module.exports = Router;
 
