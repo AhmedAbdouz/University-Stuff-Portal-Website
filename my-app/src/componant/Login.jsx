@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useHistory } from "react-router-dom";
 import { useLocalStorage } from '../useLocalStorage';
 import ResetPassword from "./ResetPassword";
-axios.defaults.withCredentials=true;
+axios.defaults.withCredentials = true;
 
 function Login() {
 
@@ -16,7 +16,7 @@ function Login() {
     const [flag, setflag] = useState(false);
     const [userID, setUserID] = useState(false);
 
-    const [id,setId] = useLocalStorage("id","");
+    const [id, setId] = useLocalStorage("id", "");
 
     function handleChange(event) {
         if (event.target.name == "email")
@@ -41,15 +41,25 @@ function Login() {
         event.preventDefault();
         axios.post(`http://localhost:4000/login`, postlogin)
             .then(res => {
-                console.log(res.data );
+                console.log(res.data);
                 if (res.data.message == "change password") {  // needs to change the password and delete his authantication 
                     setUserID(res.data.id);
                     setflag(true);
-                    setMessage("You need to change your Password"+userID);
-                }   
+                    setMessage("You need to change your Password");
+                }
                 else if (res.data.message == "loged in") {
                     setId(res.data.id);
-                    history.push("/profile");
+                    console.log(res.data);
+                    if (res.data.coordinator)
+                        history.push("/coordinator");
+                    else if (res.data.head)
+                        history.push("/head");
+                    else if (res.data.instructor)
+                        history.push("/instructor");
+                    else if (res.data.ta)
+                        history.push("/AcMember");
+                    else 
+                        history.push("/hr");
                 }
                 else {
                     setMessage(res.data);
