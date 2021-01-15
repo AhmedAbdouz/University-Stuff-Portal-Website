@@ -72,6 +72,7 @@ async function findC() {
 
 
 
+
 /// Ahmed Part
 {
   let emptyschadule = [{
@@ -150,8 +151,10 @@ async function findC() {
     })
   })
 
+ 
+
   app.get("/notification", authanticateToken, (req, res) => {
-    return res.send(["hello ","world"]);
+    return res.send(["hello ","world","world","world","world","world","world","world","ahmed","jkghug"]);
     const arr = req.body.id.split("-");
         if (arr[0] == "hr") {
           hr.findOne({ id: req.userID }, (err, founduser) => {
@@ -301,7 +304,7 @@ async function findC() {
                       secure: false, // set to true if your using https
                       httpOnly: true,
                     })
-                    .send({ message: "loged in", id: user.id });
+                    .send({ message: "loged in", id: user.id , instructor:user.instructor, head:user.head, coordinator:user.coordinator , ta:user.ta  });
                 }
               } else
                 res.send("wrong password or he is not ac");
@@ -520,7 +523,7 @@ async function findC() {
 
   // no need for authantication he/she will give us the id than this is the authantication part
   app.post("/signin", (req, res) => {
-
+    console.log(req.body);
     const added = { date: new Date(), type: "in" };
     const n = added.date.getTimezoneOffset();
     const startTime = new Date();
@@ -690,123 +693,7 @@ async function findC() {
     }
   })
 
-  // app.get("/viewmissinghours",authanticateToken,(req,res)=>{
-  //   const arr = req.userID.split("-");
-  //   if(arr[0]=="hr"){
-  //     hr.findOne({id:req.userID},(err,foundUser)=>{
-  //       if(err){
-  //         console.log(err);
-  //       }
-  //       else{
-  //         let dayIdx=0;
-  //         let dayOff=foundUser.dayOff;
-  //         switch(dayOff){
-  //           case "Saturday":dayIdx=6;break;
-  //           case "Sunday":dayIdx=0;break;
-  //           case "Monday":dayIdx=1;break;
-  //           case "Tuesday":dayIdx=2;break;
-  //           case "Wednesday":dayIdx=3;break;
-  //           case "Thursday":dayIdx=4;break;
-  //           case "Friday":dayIdx=5;break;
-  //         }
-  //         let ans=[];
-  //         let month=new Date().getMonth();
-  //         let year = new Date().getFullYear();
-  //         let start = new Date();
-  //         start.setHours(0,0,0);
-  //         let monthdays= new Date(year,month,0).getDate();
-  //         // let arr = foundUser.attendance.filter(x => x.date.getMonth==month && x.date.getYear()==year);
-  //         let idx=foundUser.attendance.length-1;
-  //         let total=8*60+24;
-  //         while(true){
-  //           let f =false;
-  //           let sum=0;
-  //           while(idx >= 0 ){
-  //             let diff= (foundUser.attendance[idx].date - start)/(1000*60);
-  //             if(diff<0|| diff >24*60)
-  //               break;
-
-  //             if(foundUser.attendance[idx].type != "in" && idx>0){
-  //               sum+=(foundUser.attendance[idx].date-foundUser.attendance[idx-1].date)/(1000*60);
-  //               idx--;
-  //             }
-  //             idx--;
-  //           }
-  //           if( start.getDay() == 5 ){
-  //             ans.push({date:JSON.parse(JSON.stringify(start)),missinghours :total-sum , type:"Friday"});
-  //           }
-  //           else if(start.getDay() == dayIdx){
-  //             ans.push({date:JSON.parse(JSON.stringify(start)),missinghours :total-sum , type:"dayOff"})
-  //           }
-  //           else{
-  //             ans.push({date:JSON.parse(JSON.stringify(start)),missinghours :total-sum ,type:" Attended"});
-  //           }
-  //           start.setDate(start.getDate()-1);
-  //           if(start.getDate()==11)
-  //             break;
-  //         }
-  //         res.send(ans);
-  //       }
-  //     })
-  //   } 
-  //   else{// sec part
-  //     acMember.findOne({id:req.userID},(err,foundUser)=>{
-  //       if(err){
-  //         console.log(err);
-  //       }
-  //       else{
-  //         let dayIdx=0;
-  //         let dayOff=foundUser.dayOff;
-  //         switch(dayOff){
-  //           case "Saturday":dayIdx=6;break;
-  //           case "Sunday":dayIdx=0;break;
-  //           case "Monday":dayIdx=1;break;
-  //           case "Tuesday":dayIdx=2;break;
-  //           case "Wednesday":dayIdx=3;break;
-  //           case "Thursday":dayIdx=4;break;
-  //           case "Friday":dayIdx=5;break;
-  //         }
-  //         let ans=[];
-  //         let month=new Date().getMonth();
-  //         let year = new Date().getFullYear();
-  //         let start = new Date();
-  //         start.setHours(0,0,0);
-  //         let monthdays= new Date(year,month,0).getDate();
-  //         // let arr = foundUser.attendance.filter(x => x.date.getMonth==month && x.date.getYear()==year);
-  //         let idx=foundUser.attendance.length-1;
-  //         let total=8*60+24;
-  //         while(true){
-  //           let f =false;
-  //           let sum=0;
-  //           while(idx >= 0 ){
-  //             let diff= (foundUser.attendance[idx].date - start)/(1000*60);
-  //             if(diff<0|| diff >24*60)
-  //               break;
-
-  //             if(foundUser.attendance[idx].type != "in" && idx>0){
-  //               sum+=(foundUser.attendance[idx].date-foundUser.attendance[idx-1].date)/(1000*60);
-  //               idx--;
-  //             }
-  //             idx--;
-  //           }
-  //           if( start.getDay() == 5 ){
-  //             ans.push({date:JSON.parse(JSON.stringify(start)),missinghours :total-sum , type:"Friday"});
-  //           }
-  //           else if(start.getDay() == dayIdx){
-  //             ans.push({date:JSON.parse(JSON.stringify(start)),missinghours :total-sum , type:"dayOff"})
-  //           }
-  //           else{
-  //             ans.push({date:JSON.parse(JSON.stringify(start)),missinghours :total-sum ,type:" Attended"});
-  //           }
-  //           start.setDate(start.getDate()-1);
-  //           if(start.getDate()==11)
-  //             break;
-  //         }
-  //         res.send(ans);
-  //       }
-  //     })
-  //   } 
-  // })
+  
 
   function check2dates(d1, d2) {
     return d1.getYear() == d2.getYear() && d1.getMonth() == d2.getMonth() && d1.getDate() == d2.getDate();
@@ -879,7 +766,47 @@ async function findC() {
     return curDay >= d1 && curDay < d2;
   }
 
-  function findrecordfordayinfo(record) {
+  function findRecord(d1,d2){
+    return d1.getDay()==d2.getDay() && d1.getMonth()==d2.getMonth() && d1.getFullYear()==d2.getFullYear() ;
+  }
+
+  function updateDayinfo(date,id){
+    const arr = id.split("-");
+    if (arr[0] == "hr") {
+      hr.findOne({id:id},async(err,foundUser)=>{
+        if(err)
+          console.log(err);
+        else{
+          for(let idx= 0 ; idx<foundUser.dayOff;idx++){
+            if(findRecord(date,foundUser.dayinfo[idx].date)){
+              foundUser.dayinfo.splice(idx,idx);
+              foundUser.dayinfo.push(findrecordfordayinfo());
+              foundUser.dayinfo.sort();
+              await foundUser.save();
+            }
+          }
+        }
+      })
+    }
+    else{
+      acMember.findOne({id:id},async (err,foundUser)=>{
+        if(err)
+          console.log(err);
+        else{
+          for(let idx= 0 ; idx<foundUser.dayOff;idx++){
+            if(findRecord(date,foundUser.dayinfo[idx].date)){
+              foundUser.dayinfo.splice(idx,idx);
+              foundUser.dayinfo.push(findrecordfordayinfo());
+              foundUser.dayinfo.sort();
+              await foundUser.save();
+            }
+          }
+        }
+      })
+    }   
+  }
+
+  function findrecordfordayinfo(record,date) {
 
     let dayIdx = 0;
     let dayOff = record.dayOff;
@@ -897,6 +824,8 @@ async function findC() {
     let idx = record.attendance.length - 1;
     record.attendance.sort(function (a, b) { return a.date - b.date });
     let curDay = new Date();
+    if(date)
+      curDay=date;
     let f = false;
     let total = 8 * 60 + 24;
     while (idx >= 0) {
@@ -954,13 +883,13 @@ async function findC() {
 
     let ans = {};
     if (curDay.getDay() == 5) {
-      ans = { date: curDay, missinghours: total - sum, type: "Friday", missingDay: "NO" };
+      ans = { date: curDay, missinghours: (total - sum)/60, type: "Friday", missingDay: "NO" };
     }
     else if (curDay.getDay() == dayIdx) {
-      ans = ({ date: curDay, missinghours: total - sum, type: "dayOff", missingDay: "NO" })
+      ans = ({ date: curDay, missinghours: (total - sum)/60, type: "dayOff", missingDay: "NO" })
     }
     else {
-      ans = ({ date: curDay, missinghours: total - sum, type: " workDay", missingDay: "NO" });
+      ans = ({ date: curDay, missinghours: (total - sum)/60, type: " workDay", missingDay: "NO" });
     }
     // attended normal , attended in dayoff , attended in holidays,
     if (g) {
@@ -976,7 +905,7 @@ async function findC() {
       ans.missingDay = "YES";
       record.missingdays++;
     }
-    record.hours += sum;
+    record.hours += sum/60;
     return ans;
   }
 

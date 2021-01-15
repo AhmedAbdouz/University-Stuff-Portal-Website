@@ -14,6 +14,7 @@ class Attendance extends React.Component {
     }
 
     componentDidMount() {
+        console.log("this lih ds l");
         axios.get(`http://localhost:4000/hr/stuffmissing`).then(res => {
             this.setState({ data: res.data });
             this.setState({ isLoading: false });

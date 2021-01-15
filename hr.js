@@ -73,7 +73,10 @@ const schema = mongoose.Schema( {
     type:Number
   },
   notification : {
-   type:Array
+    type: {
+      noti : Array,
+      num: Number
+    }
   }
 })
 

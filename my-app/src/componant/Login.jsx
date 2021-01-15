@@ -48,12 +48,11 @@ function Login() {
                     setMessage("You need to change your Password");
                 }
                 else if (res.data.message == "loged in") {
-                    setId(res.data.id);
                     console.log(res.data);
                     if (res.data.coordinator)
                         history.push("/coordinator");
                     else if (res.data.head)
-                        history.push("/head");
+                        history.push("/Hod");
                     else if (res.data.instructor)
                         history.push("/instructor");
                     else if (res.data.ta)

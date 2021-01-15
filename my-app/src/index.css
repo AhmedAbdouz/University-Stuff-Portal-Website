@@ -43,3 +43,21 @@ input {
   padding: 0 18px;
   font-size: 1.2rem;
 }
+.notitem{
+  padding: 0;
+  border: none;
+  background: none;
+}
+.noti{
+  color: red;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.navButton{
+  color:gray;
+  padding: 10px;
+  border: none;
+  background: none;
+}

@@ -6,6 +6,7 @@ import AddStaff from "./componant/AddStaff.jsx";
 import Attendance from "./componant/Attendance";
 import monthPicker from "./componant/month-picker";
 import UpdateProfile from "./componant/UpdateProfile";
+import Notification from "./componant/Notification";
 
 // HEMA 
 import HRpg from "./componant/HRpg.jsx";
@@ -85,10 +86,11 @@ function App() {
         <Route exact path="/" component={Login} />
         <Route path="/profile" component={AcMember} />
         <Route path="/UpdateProfile" component={UpdateProfile} />
+        <Route path="/notification" component={Notification} />
 
         {/* HEMA */}
 
-        <Route path="/hr" component={HRpg} />
+        
         <Route exact path="/hr/addfaculty" component={AddFaculty} />
         <Route exact path="/hr/adddepartment" component={AddDepartment} />
         <Route exact path="/hr/addcourse" component={AddCourse} />
@@ -108,6 +110,7 @@ function App() {
         <Route exact path="/hr/stuffattendace" component={StuffAttendance} />
         <Route exact path="/hr/addsign" component={AddSign} />
         <Route exact path="/hr/stuffmissing" component={StuffMissing} />
+        <Route path="/hr" component={HRpg} />
 
         {/*  Mahmoud  */}
         <Route exact path="/Hod" component={Hod}/>
