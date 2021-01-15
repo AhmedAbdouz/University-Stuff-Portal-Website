@@ -71,6 +71,9 @@ const schema = mongoose.Schema( {
   },
   AccidentalCount:{
     type:Number
+  },
+  notification : {
+   type:Array
   }
 })
 

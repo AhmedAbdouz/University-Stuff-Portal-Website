@@ -16,6 +16,8 @@ function Login() {
     const [flag, setflag] = useState(false);
     const [userID, setUserID] = useState(false);
 
+    const [id,setId] = useLocalStorage("id","");
+
     function handleChange(event) {
         if (event.target.name == "email")
             setEmail(event.target.value);
@@ -43,10 +45,10 @@ function Login() {
                 if (res.data.message == "change password") {  // needs to change the password and delete his authantication 
                     setUserID(res.data.id);
                     setflag(true);
-                    setMessage("You need to change your Password");
+                    setMessage("You need to change your Password"+userID);
                 }   
                 else if (res.data.message == "loged in") {
-                    console.log("ok successfull login");
+                    setId(res.data.id);
                     history.push("/profile");
                 }
                 else {
@@ -56,7 +58,6 @@ function Login() {
             .catch(function (error) {
                 console.log(error);
             });
-
     }
 
 

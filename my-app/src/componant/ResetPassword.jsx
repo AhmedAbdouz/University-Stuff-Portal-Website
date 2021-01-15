@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useLocalStorage } from '../useLocalStorage';
 
 function ResetPassword(props) {
 

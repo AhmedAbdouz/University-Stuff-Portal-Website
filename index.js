@@ -51,21 +51,24 @@ const hrHema = new hr({
 
 })
 let c;
-// findC();
-
+let hr_Counter;
+let AC_Counter;
 async function findC() {
   await constants.findOne({}, (err, result) => {
     if (err)
-      console.log(err);
+    console.log(err);
     else if (!result) {
       console.log("constants collection is empty")
     } else {
       c = result;
+       hr_Counter=c.hr_Counter;
+       AC_Counter=c.ac_Counter;
     }
-
+    
   })
 }
 
+  findC();
 
 
 
@@ -130,32 +133,6 @@ async function findC() {
     });
   };
 
-  // async function findUser(id,res){
-  //   const arr =id.split("-");
-  //     if(arr[0]=="hr"){
-  //       hr.findOne({id:id},function(err , foundUser){
-  //         console.log(foundUser);
-  //         res.send(foundUser);
-  //         if(err){
-  //           res.send(err);
-  //         }
-  //         else{
-  //           return foundUser;
-  //         }
-  //       });
-  //     }
-  //     else{
-  //       acMember.findOne({id:id},function(err , foundUser){
-  //         if(err){
-  //           res.send(err);
-  //         }
-  //         else{
-  //           return foundUser;
-  //         }
-  //       });
-  //     }
-  // };
-
   let genertateToken = function (res, id) {
     const token = jwt.sign({ id }, process.env.ACCESS_TOKEN_SECRET);
     return res.cookie('token', token, {
@@ -171,6 +148,30 @@ async function findC() {
       founduser.name = "hello";
       founduser.save();
     })
+  })
+
+  app.get("/notification", authanticateToken, (req, res) => {
+    return res.send(["hello ","world"]);
+    const arr = req.body.id.split("-");
+        if (arr[0] == "hr") {
+          hr.findOne({ id: req.userID }, (err, founduser) => {
+            if(err)
+            return res.send(err);
+            else{
+              return res.send(founduser.notification)
+            }
+          })
+        }
+        else{
+          acMember.findOne({ id: req.userID }, (err, founduser) => {
+            if(err)
+            return res.send(err);
+            else{
+              return res.send(founduser.notification)
+            }
+          })
+        }
+    
   })
 
   app.post("/resetpassword", async (req, res) => {
@@ -202,8 +203,8 @@ async function findC() {
                     secure: false, // set to true if your using https
                     httpOnly: true,
                   })
-                  user.password=Hashedpassword;
-                  user.firstLogin=false;
+                  user.password = Hashedpassword;
+                  user.firstLogin = false;
                   await user.save();
                   res.send("ok")
                 }
@@ -227,9 +228,10 @@ async function findC() {
                     secure: false, // set to true if your using https
                     httpOnly: true,
                   })
-                  user.password=Hashedpassword;
-                  user.firstLogin=false;
+                  user.password = Hashedpassword;
+                  user.firstLogin = false;
                   await user.save();
+                  res.send("ok")
                 }
                 else
                   res.send("wrong oldpassword");
@@ -242,7 +244,6 @@ async function findC() {
   })
 
   app.post("/login", (req, res) => {
-    console.log("hello hey this the login");
     const email = req.body.email;
     const password = req.body.password;
     const staffType = req.body.staffType;  // 1 => hr  && 2 => acmember
@@ -259,18 +260,19 @@ async function findC() {
           else {
             bcryptjs.compare(password, user.password, function (err, ok) {
               if (ok) { // Passwords match
-                res.userID=user.id;
+                res.userID = user.id;
                 if (user.firstLogin) {
-                  res.send({message : "change password",id:user.id})
+                  res.send({ message: "change password", id: user.id })
                 }
                 else {
                   const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
                   res
-                  .status(202)
-                  .cookie('token', token, {
-                    secure: false, // set to true if your using https
-                  })
-                  .send({message : "loged in",id:user.id});
+                    .status(202)
+                    .cookie('token', token, {
+                      secure: false, // set to true if your using https
+                      httpOnly: true,
+                    })
+                    .send({ message: "loged in", id: user.id });
                 }
               } else
                 res.send("wrong password or he is not hr");
@@ -281,28 +283,28 @@ async function findC() {
       else {
         acMember.findOne({ email: email }, function (err, user) {
           if (err)
-            return res.send(err);
+            res.send(err);
           else if (!user)
-            return res.send("couldn't find the user with this email");
+            res.send("couldn't find the user with this email");
           else {
             bcryptjs.compare(password, user.password, function (err, ok) {
               if (ok) { // Passwords match
-                res.userID=user.id;
+                res.userID = user.id;
                 if (user.firstLogin) {
-                  res.send("You have to change your password loading redirecting to change password login.")
+                  res.send({ message: "change password", id: user.id })
                 }
                 else {
                   const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET);
-                  res.setHeader("Access-Control-Allow-Origin", "*");
-                  res.cookie('token', token, {
-                    secure: false, // set to true if your using https
-                    httpOnly: true,
-                  })
-                  res.send("successfull AC login");
+                  res
+                    .status(202)
+                    .cookie('token', token, {
+                      secure: false, // set to true if your using https
+                      httpOnly: true,
+                    })
+                    .send({ message: "loged in", id: user.id });
                 }
               } else
-                res.send("wrong password or he is not AC member");
-
+                res.send("wrong password or he is not ac");
             });
           }
         })
@@ -345,6 +347,7 @@ async function findC() {
             missingdays: 0,
             LeaveRequests: [],
             holidayRequests: [],
+            notification: [],
             AccidentalCount: 0
           })
           c.hr_Counter++;
@@ -376,6 +379,7 @@ async function findC() {
             missingdays: 0,
             LeaveRequests: [],
             holidayRequests: [],
+            notification: [],
             AccidentalCount: 0
           });
           c.ac_Counter++;
@@ -498,7 +502,7 @@ async function findC() {
           res.send(err);
         }
         else {
-          res.send("successfully updated these info");
+          res.send("Successfully updated these info");
         }
       });
     }
@@ -508,7 +512,7 @@ async function findC() {
           res.send(err);
         }
         else {
-          res.send("successfully updated these info");
+          res.send("Successfully updated these info");
         }
       });
     }
@@ -594,7 +598,9 @@ async function findC() {
 
   app.post("/attendance", authanticateToken, async (req, res) => {
     const month = req.body.month;
+    const year = req.body.year;
     const filt = { id: req.userID }
+
 
     const arr = req.userID.split("-");
     if (arr[0] == "hr") {
@@ -607,7 +613,7 @@ async function findC() {
         else {
           let temp = result.attendance;
           if (month) {
-            temp = result.attendance.filter(record => record.date.getMonth() + 1 == month);
+            temp = result.attendance.filter(record => record.date.getMonth() + 1 == month && record.date.getFullYear() == year);
           }
           res.send(temp);
         }
@@ -631,7 +637,18 @@ async function findC() {
     }
   })
 
-  app.get("/view_missingdays_and_hours", authanticateToken, (req, res) => {
+  app.get("/monthPiker",authanticateToken,(req,res)=>{
+    res.send("render Month componant")
+  })
+  app.get("/testAuthantication",authanticateToken,(req,res)=>{
+    res.send("render the componant")
+  })
+  // function filterMonth(arr,month,year){
+  //   let temp=[];
+
+  // }
+
+  app.post("/view_missingdays_and_hours", authanticateToken, (req, res) => {
     const arr = req.userID.split("-");
     if (arr[0] == "hr") {
       hr.findOne({ id: req.userID }, (err, foundUser) => {
@@ -641,7 +658,15 @@ async function findC() {
         if (!foundUser)
           return res.send("could not complete the update because of a problem in the database");
         else {
-          res.send(foundUser.dayinfo);
+          if (req.body.month && req.body.year) {
+            const temp = foundUser.dayinfo.filter(record =>
+              record.date.getMonth() + 1 == req.body.month && record.date.getFullYear() == req.body.year
+            );
+            res.send({ arr: temp, hours: foundUser.hours ,missingdays:foundUser.missingdays});
+          }
+          else {
+            res.send({ arr: foundUser.dayinfo, hours: foundUser.hours ,missingdays:foundUser.missingdays});
+          }
         }
       })
     }
@@ -653,7 +678,13 @@ async function findC() {
         if (!foundUser)
           return res.send("could not complete the update because of a problem in the database");
         else {
-          return res.send(foundUser.dayinfo);
+          if (req.body.month && req.body.year) {
+            const temp = foundUser.dayinfo.filter(record => record.date.getMonth() + 1 == req.body.month && record.date.getFullYear() == req.body.year);
+            res.send({ arr: temp, hours: foundUser.hours ,missingdays:foundUser.missingdays});
+          }
+          else {
+            res.send({ arr: foundUser.dayinfo, hours: foundUser.hours ,missingdays:foundUser.missingdays});
+          }
         }
       })
     }
@@ -789,7 +820,7 @@ async function findC() {
 
   const salaryJob = schedule.scheduleJob("0 20 10 * *", () => {
     console.log("jobs runs automaticaly  here");
-    updateSalary(); 
+    updateSalary();
   });
 
 
@@ -823,21 +854,22 @@ async function findC() {
     })
   }
 
-  const dayJob = schedule.scheduleJob({ hour: 19 , minute:0 }, () => {
+  const dayJob = schedule.scheduleJob({ hour: 19, minute: 0 }, () => {
     console.log("jobs runs automaticaly");
     updateDayinfo();
   });
 
-
+  // updateDayinfo();
   function updateDayinfo() {
     hr.find({}, (err, users) => {
       if (err)
         console.log(err);
       else {
         users.forEach(record => {
-          let ans = JSON.parse(JSON.stringify(findrecordfordayinfo(record)));
+          let ans = findrecordfordayinfo(record);
           record.dayinfo.push(ans);
           record.save();
+
         })
       }
     })
@@ -895,6 +927,10 @@ async function findC() {
           record.AccidentalCount--;
           record.missingdays++;
         }
+        else if (arr[idx].type == "Sick") {
+          record.AccidentalCount--;
+          record.missingdays++;
+        }
         sum += 8 * 60 + 24;
         g = true;
       }
@@ -918,13 +954,13 @@ async function findC() {
 
     let ans = {};
     if (curDay.getDay() == 5) {
-      ans = { date: JSON.parse(JSON.stringify(curDay)), missinghours: total - sum, type: "Friday", missingDay: false };
+      ans = { date: curDay, missinghours: total - sum, type: "Friday", missingDay: "NO" };
     }
     else if (curDay.getDay() == dayIdx) {
-      ans = ({ date: JSON.parse(JSON.stringify(curDay)), missinghours: total - sum, type: "dayOff", missingDay: false })
+      ans = ({ date: curDay, missinghours: total - sum, type: "dayOff", missingDay: "NO" })
     }
     else {
-      ans = ({ date: JSON.parse(JSON.stringify(curDay)), missinghours: total - sum, type: " workDay", missingDay: false });
+      ans = ({ date: curDay, missinghours: total - sum, type: " workDay", missingDay: "NO" });
     }
     // attended normal , attended in dayoff , attended in holidays,
     if (g) {
@@ -937,12 +973,11 @@ async function findC() {
     }
 
     if (!f && !g && curDay.getDay() != dayIdx && curDay.getDay() != 5) {
-      ans.missingDay = true;
+      ans.missingDay = "YES";
       record.missingdays++;
     }
     record.hours += sum;
-
-    return JSON.parse(JSON.stringify(ans))
+    return ans;
   }
 
   //updateSalary(); // delete
@@ -953,26 +988,6 @@ async function findC() {
 
 // mahmoud
 {
-  async function checkHOD(HODid) {
-    await acMember.findOne({ id: HODid }, (err, foundUser) => {
-      if (err)
-        console.log(err);
-      else
-        return foundUser.head;
-    })
-    return false;
-  }
-
-  async function checkINS(HODid) {
-    await acMember.findOne({ id: HODid }, (err, foundUser) => {
-      if (err)
-        console.log(err);
-      else
-        return foundUser.instructor;
-    })
-    return false;
-  }
-
   app.post("/assign_instructor", authanticateToken, async function (req, res) {
     const tokenId = req.userID;
     let f = await checkHOD(tokenId);
@@ -1032,7 +1047,7 @@ async function findC() {
     });
 
   })
-  //HOD AND INSTRUCTOR
+  //HOD AND INSTRUCTOR --
   app.post("/view_depart_staff", authanticateToken, async function (req, res) {
     const depart_name = req.body.department_name;
     let x = [];
@@ -1043,19 +1058,23 @@ async function findC() {
         if (err)
           res.send(err);
         else {
-          for (let i = 0; i < result.staff.length; i++) {
-            await acMember.find({
-              id: result.staff[i]
-            },
-              function (err, result2) {
-                if (err)
-                  res.send(err);
-                else {
-                  x.push(result2)
+          if (result == undefined)
+            res.send("No Staff found");
+          else {
+            for (let i = 0; i < result.staff.length; i++) {
+              await acMember.find({
+                id: result.staff[i]
+              },
+                function (err, result2) {
+                  if (err)
+                    res.send(err);
+                  else {
+                    x.push(result2)
+                  }
                 }
-              }
-            )
+              )
 
+            }
           }
           return res.send(x);
         }
@@ -1065,7 +1084,28 @@ async function findC() {
 
 
   })
-  //HOD
+  app.post("/get_staff_member", authanticateToken, async function (req, res) {
+    const mem_id = req.body.id;
+    await acMember.findOne({
+      id: mem_id
+    },
+      async function (err, result) {
+        if (err)
+          res.send(err);
+        else {
+          if (result == undefined)
+            res.send("No Staff found");
+          else {
+            return res.send(result);
+          }
+        }
+      }
+    )
+
+
+
+  })
+  //HOD --
   app.post("/view_depart_staff_dayoff", authanticateToken, async function (req, res) {
     const tokenId = req.userID;
     let f = await checkHOD(tokenId);
@@ -1081,22 +1121,26 @@ async function findC() {
         if (err)
           res.send(err);
         else {
-          for (let i = 0; i < result.staff.length; i++) {
-            await acMember.findOne({
-              id: result.staff[i]
-            },
-              function (err, result) {
-                if (err)
-                  res.send(err);
-                else {
-                  y = result.name + "  " + result.dayOff;
-                  x.push(y);
+          if (result == undefined)
+            res.send("No Staff found");
+          else {
+            for (let i = 0; i < result.staff.length; i++) {
+              await acMember.findOne({
+                id: result.staff[i]
+              },
+                function (err, result) {
+                  if (err)
+                    res.send(err);
+                  else {
+                    y = result.name + "  " + result.dayOff;
+                    x.push(y);
+                  }
                 }
-              }
-            )
+              )
 
+            }
+            return res.send(x)
           }
-          return res.send(x)
         }
       }
     )
@@ -1107,15 +1151,7 @@ async function findC() {
     let f = await checkHOD(tokenId);
     if (!f)
       return res.send("You are not allowed to do so");
-    const depart_name = req.body.department_name;
     const mem_id = req.body.staff_id;
-    await department.findOne({
-      name: depart_name
-    },
-      async function (err, result) {
-        if (err)
-          res.send(err);
-        else {
           await acMember.findOne({
             id: mem_id
           },
@@ -1123,21 +1159,17 @@ async function findC() {
               if (err)
                 res.send(err);
               else {
-                return res.send(result.name + "  " + result.dayOff);
+                if (result == undefined)
+                  res.send("No Staff found");
+                else {
+                  return res.send("  DayOff:  " + result.dayOff);
+                }
               }
             }
           )
-
-
-        }
-      }
-    )
-
-
-
   })
 
-  //HOD
+  //HOD --
   app.post("/view_course_staff", authanticateToken, async function (req, res) {
     const tokenId = req.userID;
     let f = await checkHOD(tokenId);
@@ -1160,8 +1192,12 @@ async function findC() {
                 if (err)
                   res.send(err);
                 else {
+                  if (result == undefined)
+                  res.send("No Staff found");
+                else {
                   x.push(result);
                 }
+              }
               }
             )
 
@@ -1173,9 +1209,13 @@ async function findC() {
               function (err, result) {
                 if (err)
                   res.send(err);
+                else { 
+                  if (result == undefined)
+                  res.send("No Staff found");
                 else {
                   x.push(result);
                 }
+              }
               }
             )
 
@@ -1195,35 +1235,29 @@ async function findC() {
     let f = await checkHOD(tokenId);
     if (!f)
       return res.send("You are not allowed to do so");
-
-    const depart_name = req.body.department_name;
     const course_na = req.body.course_name;
     let x;
-    await department.find({
-      name: depart_name
+    let y;
+    await course.findOne({
+      name: course_na
     },
-      async function (err, result) {
+      function (err, result) {
         if (err)
           res.send(err);
         else {
-          await course.findOne({
-            name: course_na
-          },
-            function (err, result) {
-              if (err)
-                res.send(err);
-              else {
-                x = result.covarge + "";
-              }
-            }
-          )
-
-          return res.send(x);
-
+          if (result == undefined)
+            res.send("No Staff found");
+          else {
+            y = result.covarge / result.total;
+            x = y + "";
+          }
         }
-
       }
     )
+
+    return res.send(x);
+
+
   })
   //INSTRUCTOR
   app.post("/view_Instructor_course_coverage", authanticateToken, async function (req, res) {
@@ -1254,8 +1288,12 @@ async function findC() {
         if (err)
           res.send(err);
         else {
+          if (result == undefined)
+                  res.send("No course found");
+                else {
           return res.send(result.slots);
         }
+      }
       }
     )
   })
@@ -4800,11 +4838,7 @@ async function findC() {
 
 }
 
-// hema
-{
 
-
-}
 app.listen(4000, function () {
   console.log("Server started at port 4000 changed");
 });

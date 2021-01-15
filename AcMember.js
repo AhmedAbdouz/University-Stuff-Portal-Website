@@ -121,7 +121,10 @@ const schema = mongoose.Schema( {
 
   sentLeaveRequest: { //{date,course,slot,day}
     type: Array
-  }
+  },
+  notification : {
+    type:Array
+   }
 })
 
 const acMember = new mongoose.model("acMember", schema);
