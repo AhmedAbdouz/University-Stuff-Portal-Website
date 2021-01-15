@@ -588,6 +588,135 @@ Router.post('/stuffattendance', authanticateToken, (req, res) => {
 
 //add sign in/out record.
 
+function updateDayinfo(date,id){
+  const arr = id.split("-");
+  if (arr[0] == "hr") {
+    hr.findOne({id:id},async(err,foundUser)=>{
+      if(err)
+        console.log(err);
+      else{
+        for(let idx= 0 ; idx<foundUser.dayOff;idx++){
+          if(findRecord(date,foundUser.dayinfo[idx].date)){
+            founduser.hours -= (8*60+24)/60 + foundUser.dayinfo[idx].missinghours;
+            foundUser.dayinfo.splice(idx,idx);
+            foundUser.dayinfo.push(findrecordfordayinfo());
+            foundUser.dayinfo.sort();
+            await foundUser.save();
+          }
+        }
+      }
+    })
+  }
+  else{
+    acMember.findOne({id:id},async (err,foundUser)=>{
+      if(err)
+        console.log(err);
+      else{
+        for(let idx= 0 ; idx<foundUser.dayOff;idx++){
+          if(findRecord(date,foundUser.dayinfo[idx].date)){
+            founduser.hours -= (8*60+24)/60 + foundUser.dayinfo[idx].missinghours;
+            foundUser.dayinfo.splice(idx,idx);
+            foundUser.dayinfo.push(findrecordfordayinfo());
+            foundUser.dayinfo.sort();
+            await foundUser.save();
+          }
+        }
+      }
+    })
+  }   
+}
+
+function findrecordfordayinfo(record,date) {
+
+  let dayIdx = 0;
+  let dayOff = record.dayOff;
+  switch (dayOff) {
+    case "Saturday": dayIdx = 6; break;
+    case "Sunday": dayIdx = 0; break;
+    case "Monday": dayIdx = 1; break;
+    case "Tuesday": dayIdx = 2; break;
+    case "Wednesday": dayIdx = 3; break;
+    case "Thursday": dayIdx = 4; break;
+    case "Friday": dayIdx = 5; break;
+  }
+
+  let sum = 0;
+  let idx = record.attendance.length - 1;
+  record.attendance.sort(function (a, b) { return a.date - b.date });
+  let curDay = new Date();
+  if(date)
+    curDay=date;
+  let f = false;
+  let total = 8 * 60 + 24;
+  while (idx >= 0) {
+    let diff = (record.attendance[idx].date - curDay) / (1000 * 60);
+    if (check2dates(record.attendance[idx].date, curDay) && record.attendance[idx].type == "out"
+      && idx > 0 && record.attendance[idx - 1].type == "in" && check2dates(record.attendance[idx - 1].date, curDay)) {
+      sum += (record.attendance[idx].date - record.attendance[idx - 1].date) / (1000 * 60);
+      idx--;
+      f = true;
+    }
+    else if (record.attendance[idx].date < curDay)
+      break;
+    idx--;
+  }
+
+  /// here for requests 
+  let arr = record.sentLeaveRequest;
+  arr.sort(function (a, b) { return a.date - b.date });
+  idx = arr.length - 1;
+  let g = false;
+  while (idx >= 0) {
+    if (arr[idx].status == "Accepted" && arr[idx].date.getDay() == curDay.getDay()) {
+
+      if (arr[idx].type == "Annual") {
+        record.missingdays++;
+      }
+      else if (arr[idx].type == "Accidental") {
+        record.AccidentalCount--;
+        record.missingdays++;
+      }
+      else if (arr[idx].type == "Sick") {
+        record.AccidentalCount--;
+        record.missingdays++;
+      }
+      sum += 8 * 60 + 24;
+      g = true;
+    }
+    else if (arr.dateleave < curDay)
+      break;
+    idx--;
+  }
+
+
+  let ans = {};
+  if (curDay.getDay() == 5) {
+    ans = { date: curDay, missinghours: (total - sum)/60, type: "Friday", missingDay: "NO" };
+  }
+  else if (curDay.getDay() == dayIdx) {
+    ans = ({ date: curDay, missinghours: (total - sum)/60, type: "dayOff", missingDay: "NO" })
+  }
+  else {
+    ans = ({ date: curDay, missinghours: (total - sum)/60, type: " workDay", missingDay: "NO" });
+  }
+  // attended normal , attended in dayoff , attended in holidays,
+  if (g) {
+    ans.type = "leave Request"
+  }
+  if (curDay.getDay() == dayIdx)
+    sum += 8 * 60 + 24;
+  else if (curDay.getDay() == 5) {
+    sum = 8 * 60 + 24;
+  }
+
+  if (!f && !g && curDay.getDay() != dayIdx && curDay.getDay() != 5) {
+    ans.missingDay = "YES";
+    record.missingdays++;
+  }
+  record.hours += sum/60;
+  return ans;
+}
+
 Router.post('/addsign', authanticateToken, (req, res) => {
   if (!check(req.userID))
     return res.send("NOTHR");

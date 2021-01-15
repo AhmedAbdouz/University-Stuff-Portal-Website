@@ -9,7 +9,7 @@ import SlotDay from "./SlotDay.jsx";
 function Slots(props) {
   const [data, setData] = useState([1, 2, 3, 4, 5, 6]);
   useEffect(async () => {
-    var x = await axios.get(`http://localhost:4000/viewSlots`);
+    var x = await axios.get(`http://localhost:4000/view_TAs_Assignments`);
     setData(x.data);
   }, []);
 

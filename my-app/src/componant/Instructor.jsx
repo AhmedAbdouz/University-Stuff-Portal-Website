@@ -15,88 +15,88 @@ export default function Instructor() {
             <Accordion>
                 <Card>
                     <Accordion.Toggle as={Card.Header} eventKey="6">
-                        
+                        Operations
           </Accordion.Toggle>
                     <Accordion.Collapse eventKey="6">
                         <Card.Body>
-
-                            <br />
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/view_depart_staff");
-                                }}
-                            >
-                                View Department Staff
-              </button>
-                            <br />
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/view_course_staff");
-                                }}
-                            >
-                                View course staff
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/view_depart_staff");
+                                    }}
+                                >
+                                    View Department Staff
               </button>
 
-                            <br />
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/view_depart_courses_coverage");
-                                }}
-                            >
-                                View course coverge
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/view_course_staff");
+                                    }}
+                                >
+                                    View course staff
               </button>
-                            <br />
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/view_Slots");
-                                }}
-                            >
-                                View Slot Assignments of Course
+
+                                <br />
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/view_depart_courses_coverage");
+                                    }}
+                                >
+                                    View course coverge
               </button>
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/assign_course_coordinator");
-                                }}
-                            >
-                                Assign Course Coordinator
+                                <br />
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/view_Slots");
+                                    }}
+                                >
+                                    View Slot Assignments of Course
               </button>
-              <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/assign_acm_to_slots");
-                                }}
-                            >
-                                Assign Slot to Academic Member
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/assign_course_coordinator");
+                                    }}
+                                >
+                                    Assign Course Coordinator
               </button>
-              <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/delete_ac_slot_from_course");
-                                }}
-                            >
-                                Delete Slot Assignment of Academic Member
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/assign_acm_to_slots");
+                                    }}
+                                >
+                                    Assign Slot to Academic Member
               </button>
-              <button
-                                type="button"
-                                class="btn btn-secondary"
-                                onClick={() => {
-                                    history.push("/update_ac_slot_in_course");
-                                }}
-                            >
-                                Update Slot Assignment of Academic Member
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/delete_ac_slot_from_course");
+                                    }}
+                                >
+                                    Delete Slot Assignment of Academic Member
               </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    onClick={() => {
+                                        history.push("/update_ac_slot_in_course");
+                                    }}
+                                >
+                                    Update Slot Assignment of Academic Member
+              </button>
+                            </div>
                         </Card.Body>
                     </Accordion.Collapse>
                 </Card>

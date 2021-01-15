@@ -48,7 +48,7 @@ function ViewReceivedDayOffRequest(props) {
         await setTimeout(async function () {
           // Whatever you want to do after the wait
           var x = await axios.get(
-            `http://localhost:4000/viewSentReplacment/` + props.status
+            `http://localhost:4000/viewReceivedDayOffRequest/` + props.status
           );
           if (x.data != "No requests found") setData(x.data);
           setMessage(res.data);
@@ -115,6 +115,7 @@ function ViewReceivedDayOffRequest(props) {
                       type="button"
                       className="btn btn-outline-danger"
                       onClick={handleReject}
+                      value={y.id}
                     >
                       Reject
                     </button>

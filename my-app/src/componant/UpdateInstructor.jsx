@@ -30,9 +30,9 @@ export default function App() {
         old_course_name:old_course_name,
     }
 
-    function handleAddInstructor(event) {
+    function handleUpdateInstructor(event) {
         event.preventDefault();
-        axios.post(`http://localhost:4000/update_instructor`, postupdateInstructor)
+        axios.put(`http://localhost:4000/update_instructor`, postupdateInstructor)
         .then(res => {
             console.log(postupdateInstructor);
             if (res.data == "Updated") {  
@@ -51,26 +51,35 @@ export default function App() {
     return (
         <div className="App">
             <NavBar />
-            <form onSubmit = {handleAddInstructor}>
+            
                 <div className="row">
                     <div className="col-lg">
+                    <label>ID of The Instructor</label>
                         <input type="text" className="form-control" name="id" value={id} onChange={handleChange} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-lg">
+                    <label>New Course name</label>
                         <input type="text" className="form-control" name="new_course_name"  value={new_course_name} onChange={handleChange} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-lg">
+                    <label>Old Course name</label>
                         <input type="text" className="form-control" name="old_course_name"  value={old_course_name} onChange={handleChange} />
                     </div>
                 </div>
 
-
-               
-            </form>
+                <div>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger"
+                      onClick={handleUpdateInstructor}
+                    >
+                      Update Instructor
+                    </button>
+                  </div>
         </div>
     );
 

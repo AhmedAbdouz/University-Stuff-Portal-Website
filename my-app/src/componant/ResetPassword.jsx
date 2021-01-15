@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useHistory } from "react-router-dom";
 
 function ResetPassword(props) {
+
+    const history = useHistory();
 
     const [oldPassword, setoldPassword] = useState("");
     const [newPassword, setnewPassword] = useState("");
@@ -25,12 +28,11 @@ function ResetPassword(props) {
     }
 
     function handleReset(event) {
-        event.preventDefault();
         axios.post(`http://localhost:4000/resetpassword`, postReset)
             .then(res => {
-                console.log(postReset);
+                console.log(res);
                 if (res.data == "ok") {  // view profile
-                    console.log("profile");
+                    history.push("/");
                 }
                 else {
                     setMessage(res.data);

@@ -1,4 +1,11 @@
 import React, { useState } from "react";
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/dist/js/bootstrap.js';
+import $ from 'jquery';
+import Popper from 'popper.js';
+import { Button } from 'react-bootstrap';
+
 import axios from 'axios';
 import { useLocalStorage } from '../useLocalStorage';
 import { useEffect } from 'react';
@@ -28,6 +35,7 @@ function NavBar(props) {
         SetNoti(res.data);
       })
       .catch(function (error) {
+        console.log(error);
         history.push("/");
       });
   }
@@ -65,8 +73,9 @@ function NavBar(props) {
   function findrecords(){
     let idx = noti.length-1;
     let ans=[];
-    for(let i = 0 ;i<5 && idx>=0;i++,idx--){  
-      ans.push(<button className="dropdown-item notitem" type="button">{noti[idx]}</button>);
+    for(let i = 0 ;i<5 && idx>=0;i++,idx--){
+      let y = noti  
+      ans.push(<button className="notitem" type="button" onClick= {()=>{history.push(y.route)}}>{y.id} -- {y.status} </button>);
     }
     return ans;
   }
@@ -80,6 +89,20 @@ function NavBar(props) {
         </button>
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav ml-auto">
+          {/* <li key="45464">
+          <select
+          value={"Notification"}
+          onChange={handleNotifcation}
+          className="custom-select"
+        >
+          <option value="">Choose slot</option>
+          <option value="slot1">slot1 </option>
+          <option value="slot2">slot2 </option>
+          <option value="slot3">slot3 </option>
+          <option value="slot4">slot4 </option>
+          <option value="slot5">slot5 </option>
+        </select>
+          </li> */}
             <li key={20}>
               <div className="btn-group">
                 <button type="button" className = "navButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onClick={handleNotifcation}>

@@ -39,6 +39,7 @@ export default function () {
             newPassword: newPassword,
             confirmPass: confirmPass
         }
+        console.log(postUpdate);
         axios.put(`http://localhost:4000/updateprofile`, postUpdate)
             .then(res => {
                 setMessage(res.data);

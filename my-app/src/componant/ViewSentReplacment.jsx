@@ -74,7 +74,7 @@ function SentReplacment(props) {
               <tr>
                 <th scope="row"> {idx + 1} </th> <td> {y.request} </td>{" "}
                 <td> {y.slot} </td> <td> {y.day} </td> <td> {y.course} </td>{" "}
-                <td> {y.status} </td> <td> {y.to} </td> <td> {y.location} </td>{" "}
+                <td> {y.status} </td> <td> {y.to} </td> <td> {y.id} </td>{" "}
                 {(props.status == "Pending" || props.status == "") && (
                   <td> {y.id == id ? "   " + message : ""} </td>
                 )}{" "}

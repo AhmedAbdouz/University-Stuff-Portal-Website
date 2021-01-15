@@ -27,17 +27,17 @@ export default function App() {
     let postdeleteslot = {
         acMember_id: id,
         course_name: course_name,
-        slot:Slot,
-        day:Day
+        slot: Slot,
+        day: Day
     }
 
-    function handledeleteslot(event) {
+    async function handledeleteslot(event) {
         event.preventDefault();
-        axios.post(`http://localhost:4000/delete_ac_slot_from_course`, postdeleteslot)
+        await axios.post(`http://localhost:4000/delete_ac_slot_from_course`, postdeleteslot)
             .then(res => {
                 console.log(postdeleteslot);
                 console.log("Slot Deleted successfully");
-               // setMessage(res.data);
+                // setMessage(res.data);
             })
             .catch(function (error) {
                 console.log(error);
@@ -48,30 +48,40 @@ export default function App() {
     return (
         <div className="App">
             <NavBar />
-            <form onSubmit={handledeleteslot}>
                 <div className="row">
                     <div className="col-lg">
+                        <label >please enter the id of the staff member</label>
                         <input type="text" className="form-control" name="id" value={id} onChange={handleChange} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-lg">
+                        <label >please enter the course name</label>
                         <input type="text" className="form-control" name="course_name" value={course_name} onChange={handleChange} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-lg">
+                        <label >please enter number of slot ex:slot1,slot2,.....etc</label>
                         <input type="text" className="form-control" name="Slot" value={Slot} onChange={handleChange} />
                     </div>
-               </div>
+                </div>
 
-               <div className="row">
+                <div className="row">
                     <div className="col-lg">
+                    <label >please enter the day of the slot</label>
                         <input type="text" className="form-control" name="Day" value={Day} onChange={handleChange} />
                     </div>
-               </div>
-
-            </form>
+                </div>
+                <div>
+                    <button
+                        type="button"
+                        className="btn btn-outline-danger"
+                        onClick={handledeleteslot}
+                           >
+                        Delete The Slot
+                    </button>
+                </div>
         </div>
     );
 

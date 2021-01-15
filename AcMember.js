@@ -123,8 +123,8 @@ const schema = mongoose.Schema( {
     type: Array
   },
   notification : {
-    type:Array
-   }
+    noti : Array
+}
 })
 
 const acMember = new mongoose.model("acMember", schema);

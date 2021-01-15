@@ -151,11 +151,8 @@ async function findC() {
     })
   })
 
- 
-
   app.get("/notification", authanticateToken, (req, res) => {
-    return res.send(["hello ","world","world","world","world","world","world","world","ahmed","jkghug"]);
-    const arr = req.body.id.split("-");
+    const arr = req.userID.split("-");
         if (arr[0] == "hr") {
           hr.findOne({ id: req.userID }, (err, founduser) => {
             if(err)
@@ -180,13 +177,13 @@ async function findC() {
   app.post("/resetpassword", async (req, res) => {
 
     if (!req.body.oldPassword || !req.body.newPassword || !req.body.confirmPass || !req.body.id) {
-      res.send("missingfield(s)");
+      return res.send("missingfield(s)");
     }
     else {
       const newpass = req.body.newPassword;
       const confirmPass = req.body.confirmPass;
       if (newpass !== confirmPass) {
-        res.send("Password and confirmpassword don't match");
+        return res.send("Password and confirmpassword don't match");
       }
       else {
         const salt = await bcryptjs.genSalt();
@@ -195,7 +192,7 @@ async function findC() {
         if (arr[0] == "hr") {
           hr.findOne({ id: req.body.id }, function (err, user) {
             if (err)
-              res.send(err);
+             return res.send(err);
             else if (!user)
               res.send("couldn't find the user with this email");
             else {
@@ -328,7 +325,7 @@ async function findC() {
     // check that this user is hr
     hr.findOne({ id: req.userID }, async (err, result) => {
       if (err) {
-        res.send("You aren't HR to do this!!");
+        res.send("You aren't HR to do this!! || or some error happeded with the database");
       }
       else {
         const salt = await bcryptjs.genSalt();
@@ -354,7 +351,14 @@ async function findC() {
             AccidentalCount: 0
           })
           c.hr_Counter++;
-          await c.save();
+          
+          try{
+            await c.save();
+          }
+          catch(err){
+            return res.send(err);
+          }
+          console.log("here");
           newstaff.save();
           res.send("successfully add new hr to the database you can look and make sure");
         }
@@ -376,7 +380,7 @@ async function findC() {
             head: false,
             instructor: false,
             coordinator: false,
-            ta: false,
+            ta: true,
             request: [],
             annual_leave_balance: 0,
             missingdays: 0,
@@ -385,8 +389,13 @@ async function findC() {
             notification: [],
             AccidentalCount: 0
           });
-          c.ac_Counter++;
-          await c.save();
+          c.ac_Counter++; 
+          try{
+            await c.save();
+          }
+          catch(err){
+            return res.send(err);
+          }
           newstaff.save();
           res.send("successfully add new AC to the database you can look and make sure");
         }
@@ -441,10 +450,10 @@ async function findC() {
     // this part for changing password
     if (req.body.oldPassword) {
       let old = req.body.oldPassword;
-      let newpass = req.body.password;
+      let newpass = req.body.newPassword;
       let confirmPass = req.body.confirmPass;
       if (newpass !== confirmPass) {
-        res.send("new password and confirm don't match");
+        return res.send("new password and confirm don't match");
       }
       else {
         const salt = await bcryptjs.genSalt();
@@ -512,10 +521,10 @@ async function findC() {
     else {
       acMember.updateOne({ id: req.userID }, updates, function (err) {
         if (err) {
-          res.send(err);
+          return res.send(err);
         }
         else {
-          res.send("Successfully updated these info");
+          return res.send("Successfully updated these info");
         }
       });
     }
@@ -643,6 +652,7 @@ async function findC() {
   app.get("/monthPiker",authanticateToken,(req,res)=>{
     res.send("render Month componant")
   })
+
   app.get("/testAuthantication",authanticateToken,(req,res)=>{
     res.send("render the componant")
   })
@@ -779,6 +789,7 @@ async function findC() {
         else{
           for(let idx= 0 ; idx<foundUser.dayOff;idx++){
             if(findRecord(date,foundUser.dayinfo[idx].date)){
+              founduser.hours -= (8*60+24)/60 + foundUser.dayinfo[idx].missinghours;
               foundUser.dayinfo.splice(idx,idx);
               foundUser.dayinfo.push(findrecordfordayinfo());
               foundUser.dayinfo.sort();
@@ -795,6 +806,7 @@ async function findC() {
         else{
           for(let idx= 0 ; idx<foundUser.dayOff;idx++){
             if(findRecord(date,foundUser.dayinfo[idx].date)){
+              founduser.hours -= (8*60+24)/60 + foundUser.dayinfo[idx].missinghours;
               foundUser.dayinfo.splice(idx,idx);
               foundUser.dayinfo.push(findrecordfordayinfo());
               foundUser.dayinfo.sort();
@@ -867,19 +879,7 @@ async function findC() {
         break;
       idx--;
     }
-    // request for compelete not attended day
-    // arr=record.holidays;
-    // arr.sort();
-    // idx=arr.length-1;
-    // while(idx>=0){
-    //   if(arr[idx].status=="Accepted" && check2dates(curDay,arr[idx].date)){
-    //     sum=8*60+24;
-    //     g=true;
-    //     idx--;
-    //   }
-    //   else if(arr[idx]<curDay)
-    //     break;
-    // }
+
 
     let ans = {};
     if (curDay.getDay() == 5) {
@@ -916,1195 +916,1179 @@ async function findC() {
 }
 
 // mahmoud
+
+
 {
-  app.post("/assign_instructor", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const ins_id = req.body.id;
-    const course_nam = req.body.course_name;
-    course.findOneAndUpdate({ name: course_nam }, { $push: { instructor: ins_id } }, function (err) {
-      if (err) {
-        res.send(err);
+  async function checkHOD(HODid) {
+    await acMember.findOne({ id: HODid }, (err, foundUser) => {
+      if (err){
+        console.log(HODid+"5555555")
+        console.log(err);
       }
-      else {
-        return res.send("Assigned");
-      }
-    });
-  })
-  //HOD
-  app.delete("/delete_instructor", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const ins_id = req.body.id;
-    const course_nam = req.body.course_name;
+        else{
+          console.log(HODid+"44444444444")
+          console.log(foundUser.head);
+          return foundUser.head;
+        }
+      })
+    return false;
+  }
 
-
-    course.findOneAndUpdate({ name: course_nam }, { $pull: { instructor: ins_id } }, function (err) {
-      if (err) {
-        res.send(err);
-      }
+  async function checkINS(HODid) {
+    await acMember.findOne({ id: HODid }, (err, foundUser) => {
+      if (err)
+        console.log(err);
       else
-        res.send("deleted")
-    });
-  })
-  //HOD
-  app.put("/update_instructor", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
+        return foundUser.instructor;
+    })
+    return false;
+  }
+
+app.post("/assign_instructor", authanticateToken, async function (req, res) {
+  let tokenId = req.userID;
+await  acMember.findOne({id:tokenId,head:true},async function(err,result){
+    if(err)
+    res.send(err)
+    else{
+      console.log(result);
+  if (!result.head){
+  console.log("22222225555555");
+    return res.send("You are not allowed to do so");
+  }
     const ins_id = req.body.id;
-    const new_course_nam = req.body.new_course_name;
-    const old_course_nam = req.body.old_course_name;
-    course.findOneAndUpdate({ name: old_course_nam }, { $pull: { instructor: ins_id } }, function (err) {
-      if (err) {
+  const course_nam = req.body.course_name;
+  acMember.findOneAndUpdate({id:ins_id},{instructor:true},function(err){
+    if (err) {
+      res.send(err);
+    }
+    else{
+  course.findOneAndUpdate({ name: course_nam }, { $push: { instructor: ins_id } }, function (err) {
+    if (err) {
+      res.send(err);
+    }
+    else {
+      console.log(req.userID)+"6666666";
+      return res.send("Assigned");
+    }
+  });
+}
+
+})
+  }
+})
+})
+
+//HOD
+app.post("/delete_instructor", authanticateToken, function (req, res) {
+  const tokenId = req.userID;
+  const ins_id = req.body.id;
+  const course_nam = req.body.course_name;
+
+  console.log(course_nam+"555555"+ins_id);
+  course.findOneAndUpdate({ name: course_nam }, { $pull: { instructor: ins_id } }, function (err) {
+    if (err) {
+      res.send(err);
+    }
+    else
+      res.send("deleted")
+  });
+})
+//HOD
+app.put("/update_instructor", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const ins_id = req.body.id;
+  const new_course_nam = req.body.new_course_name;
+  const old_course_nam = req.body.old_course_name;
+  course.findOneAndUpdate({ name: old_course_nam }, { $pull: { instructor: ins_id } }, function (err) {
+    if (err) {
+      res.send(err);
+    }
+    else {
+      course.findOneAndUpdate({ name: new_course_nam }, { $push: { instructor: ins_id } }, function (err) {
+        if (err) {
+          res.send(err);
+        }
+        else
+          res.send("Updated")
+      });
+    }
+  });
+
+})
+//HOD AND INSTRUCTOR --
+app.post("/view_depart_staff", authanticateToken, async function (req, res) {
+  const depart_name = req.body.department_name;
+  let x = [];
+  await department.findOne({
+    name: depart_name
+  },
+    async function (err, result) {
+      if (err)
         res.send(err);
-      }
       else {
-        course.findOneAndUpdate({ name: new_course_nam }, { $push: { instructor: ins_id } }, function (err) {
-          if (err) {
-            res.send(err);
-          }
-          else
-            res.send("Updated")
-        });
-      }
-    });
-
-  })
-  //HOD AND INSTRUCTOR --
-  app.post("/view_depart_staff", authanticateToken, async function (req, res) {
-    const depart_name = req.body.department_name;
-    let x = [];
-    await department.findOne({
-      name: depart_name
-    },
-      async function (err, result) {
-        if (err)
-          res.send(err);
+        if (result == undefined)
+          res.send("No Staff found");
         else {
-          if (result == undefined)
-            res.send("No Staff found");
-          else {
-            for (let i = 0; i < result.staff.length; i++) {
-              await acMember.find({
-                id: result.staff[i]
-              },
-                function (err, result2) {
-                  if (err)
-                    res.send(err);
-                  else {
-                    x.push(result2)
-                  }
+          for (let i = 0; i < result.staff.length; i++) {
+            await acMember.findOne({
+              id: result.staff[i]
+            },
+              function (err, result2) {
+                if (err)
+                  res.send(err);
+                else {
+                  x.push(result2)
                 }
-              )
+              }
+            )
 
+          }
+        }
+        console.log(x);
+        return res.send(x);
+      }
+    }
+  )
+
+
+
+})
+app.post("/get_staff_member", authanticateToken, async function (req, res) {
+  const mem_id = req.body.id;
+  await acMember.findOne({
+    id: mem_id
+  },
+    async function (err, result) {
+      if (err)
+        res.send(err);
+      else {
+        if (result == undefined)
+          res.send("No Staff found");
+        else {
+          return res.send(result);
+        }
+      }
+    }
+  )
+
+
+
+})
+//HOD --
+app.post("/view_depart_staff_dayoff", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const depart_name = req.body.department_name;
+  let x = [];
+  let y;
+  await department.findOne({
+    name: depart_name
+  },
+    async function (err, result) {
+      if (err)
+        res.send(err);
+      else {
+        if (result == undefined)
+          res.send("No Staff found");
+        else {
+          for (let i = 0; i < result.staff.length; i++) {
+            await acMember.findOne({
+              id: result.staff[i]
+            },
+              function (err, result2) {
+                if (err)
+                  res.send(err);
+                else {
+                  x.push("Staff Member: "+result2.name + " - Day Off: " + result2.dayOff);
+                }
+              }
+            )
+
+          }
+
+         // console.log(x);
+          return res.send(x)
+        }
+      }
+    }
+  )
+})
+//HOD
+app.post("/view_member_dayoff", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+
+  const mem_id = req.body.staff_id;
+        await acMember.findOne({
+          id: mem_id
+        },
+          function (err, result) {
+            if (err)
+              res.send(err);
+            else {
+              if (result == undefined)
+                res.send("No Staff found");
+              else {
+                return res.send("  DayOff:  " + result.dayOff);
+              }
             }
           }
-          return res.send(x);
-        }
-      }
-    )
+        )
+})
 
-
-
-  })
-  app.post("/get_staff_member", authanticateToken, async function (req, res) {
-    const mem_id = req.body.id;
-    await acMember.findOne({
-      id: mem_id
-    },
-      async function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          if (result == undefined)
-            res.send("No Staff found");
-          else {
-            return res.send(result);
-          }
-        }
-      }
-    )
-
-
-
-  })
-  //HOD --
-  app.post("/view_depart_staff_dayoff", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const depart_name = req.body.department_name;
-    let x = [];
-    let y;
-    await department.findOne({
-      name: depart_name
-    },
-      async function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          if (result == undefined)
-            res.send("No Staff found");
-          else {
-            for (let i = 0; i < result.staff.length; i++) {
-              await acMember.findOne({
-                id: result.staff[i]
-              },
-                function (err, result) {
-                  if (err)
-                    res.send(err);
-                  else {
-                    y = result.name + "  " + result.dayOff;
-                    x.push(y);
-                  }
-                }
-              )
-
-            }
-            return res.send(x)
-          }
-        }
-      }
-    )
-  })
-  //HOD
-  app.post("/view_member_dayoff", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const mem_id = req.body.staff_id;
+//HOD --
+app.post("/view_course_staff", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+ 
+  const cour_name = req.body.course_name;
+  let x = [];
+  course.findOne({
+    name: cour_name
+  },
+    async function (err, result) {
+      if (err)
+        res.send(err);
+      else {
+        for (let i = 0; i < result.instructor.length; i++) {
           await acMember.findOne({
-            id: mem_id
+            id: result.instructor[i]
           },
-            function (err, result) {
+            async function (err, result) {
               if (err)
                 res.send(err);
               else {
                 if (result == undefined)
-                  res.send("No Staff found");
-                else {
-                  return res.send("  DayOff:  " + result.dayOff);
-                }
+                res.send("No Staff found");
+              else {
+                x.push(result);
               }
+            }
             }
           )
-  })
 
-  //HOD --
-  app.post("/view_course_staff", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const cour_name = req.body.course_name;
-    let x = [];
-    course.findOne({
-      name: cour_name
-    },
-      async function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          for (let i = 0; i < result.instructor.length; i++) {
-            await acMember.findOne({
-              id: result.instructor[i]
-            },
-              async function (err, result) {
-                if (err)
-                  res.send(err);
-                else {
-                  if (result == undefined)
-                  res.send("No Staff found");
-                else {
-                  x.push(result);
-                }
+        }
+        for (let j = 0; j < result.ta.length; j++) {
+          await acMember.findOne({
+            id: result.ta[j]
+          },
+            function (err, result) {
+              if (err)
+                res.send(err);
+              else { 
+                if (result == undefined)
+                res.send("No Staff found");
+              else {
+                x.push(result);
               }
-              }
-            )
+            }
+            }
+          )
 
-          }
-          for (let j = 0; j < result.ta.length; j++) {
-            await acMember.findOne({
-              id: result.ta[j]
-            },
-              function (err, result) {
-                if (err)
-                  res.send(err);
-                else { 
-                  if (result == undefined)
-                  res.send("No Staff found");
-                else {
-                  x.push(result);
-                }
-              }
-              }
-            )
-
-          }
-          return res.send(x);
         }
+        return res.send(x);
       }
-    )
+    }
+  )
 
 
 
-  })
+})
 
-  //HOD
-  app.post("/view_depart_courses_coverage", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const course_na = req.body.course_name;
-    let x;
-    let y;
-    await course.findOne({
-      name: course_na
-    },
-      function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          if (result == undefined)
-            res.send("No Staff found");
-          else {
-            y = result.covarge / result.total;
-            x = y + "";
-          }
-        }
-      }
-    )
-
-    return res.send(x);
-
-
-  })
-  //INSTRUCTOR
-  app.post("/view_Instructor_course_coverage", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkINS(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const course_na = req.body.course_name;
-    await course.findOne({
-      name: course_na
-    },
-      function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          return res.send(result.covarge + "");
-        }
-      }
-    )
-  })
-  //HOD AND Instructor
-  app.post("/view_TAs_Assignments", authanticateToken, async function (req, res) {
-    const course_na = req.body.course_name;
-    await course.findOne({
-      name: course_na
-    },
-      function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          if (result == undefined)
-                  res.send("No course found");
-                else {
-          return res.send(result.slots);
-        }
-      }
-      }
-    )
-  })
-  //HOD
-  app.post("/view_requests", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-
-    const ac_id = req.body.Hod_Id;
-    let x = [];
-    await acMember.findOne({
-      id: ac_id
-    },
-      function (err, result) {
-        if (err)
-          res.send(err);
-        else {
-          x.push(result.receivedDayoffRequest);
-          x.push(result.receivedLeavefRequest);
-          return res.send(x);
-        }
-      }
-    )
-  })
-
-  //Instructor
-  app.post("/assign_course_coordinator", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkINS(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    // req.userID // ac-15  hr-20
-    /* x="hr-4";
-     const arr = x.split("-");
-     if(arr[0]=="hr"){
-       hr.find()
-     }
-     else{
-       acm.find()
-     }*/
-
-    const course_nam = req.body.course_name;
-    const coor_id = req.body.coordinator_id;
-    course.findOneAndUpdate({ name: course_nam }, { coordinator: coor_id }, function (err) {
-      if (err) {
+//HOD
+app.post("/view_depart_courses_coverage", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  
+  const course_na = req.body.course_name;
+  let x;
+  let y;
+  await course.findOne({
+    name: course_na
+  },
+    function (err, result) {
+      if (err)
         res.send(err);
-      }
       else {
-        course.findOneAndUpdate({ id: coor_id }, { $push: { course: course_nam } }, function (err) {
+        if (result == undefined)
+          res.send("No Staff found");
+        else {
+          y = result.covarge / result.total;
+          x = y + "";
+          console.log(x);
+        }
+      }
+    }
+  )
+
+  return res.send(x);
+
+
+})
+//INSTRUCTOR
+app.post("/view_Instructor_course_coverage", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const course_na = req.body.course_name;
+  await course.findOne({
+    name: course_na
+  },
+    function (err, result) {
+      if (err)
+        res.send(err);
+      else {
+        return res.send(result.covarge + "");
+      }
+    }
+  )
+})
+//HOD AND Instructor
+app.post("/view_TAs_Assignments", authanticateToken, async function (req, res) {
+  const course_na = req.body.course_name;
+  await course.findOne({
+    name: course_na
+  },
+    function (err, result) {
+      if (err)
+        res.send(err);
+      else {
+        if (result == undefined)
+                res.send("No course found");
+              else {
+        return res.send(result.slots);
+      }
+    }
+    }
+  )
+})
+//HOD
+app.post("/view_requests", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const ac_id = req.body.Hod_Id;
+  let x = [];
+  await acMember.findOne({
+    id: ac_id
+  },
+    function (err, result) {
+      if (err)
+        res.send(err);
+      else {
+        x.push(result.receivedDayoffRequest);
+        x.push(result.receivedLeavefRequest);
+        return res.send(x);
+      }
+    }
+  )
+})
+
+//Instructor
+app.post("/assign_course_coordinator", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  // req.userID // ac-15  hr-20
+  /* x="hr-4";
+   const arr = x.split("-");
+   if(arr[0]=="hr"){
+     hr.find()
+   }
+   else{
+     acm.find()
+   }*/
+
+  const course_nam = req.body.course_name;
+  const coor_id = req.body.coordinator_id;
+  course.findOneAndUpdate({ name: course_nam }, { coordinator: coor_id }, function (err) {
+    if (err) {
+      res.send(err);
+    }
+    else {
+      course.findOneAndUpdate({ id: coor_id }, { course: course_nam  }, function (err) {
+        if (err) {
+          res.send(err);
+        }
+        else{
+          res.send("Assigned")
+        }
+      });
+    }
+  })
+}
+)
+//Instructor
+app.post("/assign_acm_to_slots", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const course_na = req.body.course_name;
+  const ac_id = req.body.acMember_id;
+  const slot = req.body.slot;
+  const day = req.body.day;
+  var error = false;
+  await acMember.find({
+    id: "ac-2",
+    instructor: true,
+  }, async function (err, result) { //the token
+    if (err) {
+      res.send("err");
+      error = true;
+    } else {
+      if (!error) {
+        course.findOneAndUpdate({
+          name: course_na
+        }, {
+          $inc: {
+            covarge: 1.5
+          }
+        }, function (err) {
           if (err) {
+            error = true;
             res.send(err);
           }
-        });
+        })
       }
-    })
-  }
-  )
-  //Instructor
-  app.post("/assign_acm_to_slots", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkINS(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const course_na = req.body.course_name;
-    const ac_id = req.body.acMember_id;
-    const slot = req.body.slot;
-    const day = req.body.day;
-    var error = false;
-    await acMember.find({
-      id: "ac-2",
-      instructor: true,
-    }, async function (err, result) { //the token
-      if (err) {
-        res.send("err");
-        error = true;
-      } else {
-        if (!error) {
-          course.findOneAndUpdate({
-            name: course_na
-          }, {
-            $inc: {
-              covarge: 1.5
-            }
-          }, function (err) {
-            if (err) {
-              error = true;
-              res.send(err);
+      let l = "";
+      let t = "";
+      if (!error) {
+        await course.find({
+          name: course_na,
+        }, function (err, result) {
+
+          (result[0].slots).forEach((x) => {
+
+
+            if (x.day == day) {
+              if ("slot1" == slot) {
+
+                l = x.slot1.location;
+                t = x.slot1.type;
+              }
+              if ("slot2" == slot) {
+
+                l = x.slot2.location;
+                t = x.slot2.type;
+              }
+              if ("slot3" == slot) {
+
+                l = x.slot3.location;
+                t = x.slot3.type;
+              }
+              if ("slot4" == slot) {
+                l = x.slot4.location;
+                t = x.slot4.type;
+
+              }
+              if ("slot5" == slot) {
+
+                l = x.slot5.location;
+                t = x.slot5.type;
+              }
+
             }
           })
-        }
-        let l = "";
-        let t = "";
-        if (!error) {
-          await course.find({
-            name: course_na,
-          }, function (err, result) {
-
-            (result[0].slots).forEach((x) => {
-
-
-              if (x.day == day) {
-                if ("slot1" == slot) {
-
-                  l = x.slot1.location;
-                  t = x.slot1.type;
-                }
-                if ("slot2" == slot) {
-
-                  l = x.slot2.location;
-                  t = x.slot2.type;
-                }
-                if ("slot3" == slot) {
-
-                  l = x.slot3.location;
-                  t = x.slot3.type;
-                }
-                if ("slot4" == slot) {
-                  l = x.slot4.location;
-                  t = x.slot4.type;
-
-                }
-                if ("slot5" == slot) {
-
-                  l = x.slot5.location;
-                  t = x.slot5.type;
-                }
-
-              }
-            })
-
-          })
-        }
-
-        if (!error) {
-          course.findOneAndUpdate({
-            name: course_na
-          }, {
-            $inc: {
-              covarge: 1.5
-            }
-          }, function (err) {
-            if (err) {
-              error = true;
-              res.send(err);
-            }
-          })
-        }
-        if (slot == "slot1" && !error) {
-
-
-          acMember.updateOne({
-            id: ac_id,
-            "schadule.day": day,
-            "schadule.slot1": "free"
-          }, {
-            $set: {
-              "schadule.$.slot1": {
-                location: l,
-                course: course_na
-              }
-            }
-          },
-            function (err, result) {
-              if (err) {
-                res.send(err);
-                error = true;
-              }
-
-
-
-
-            })
-
-
-          if (!error) {
-
-            course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-              if (err) {
-                res.send(err);
-              }
-            });
-            course.updateOne({
-              name: course_na,
-              "slots.day": day,
-              "slots.slot1.instructorID": ""
-            }, {
-              $set: {
-                "slots.$.slot1": {
-                  instructorID: ac_id,
-                  location: l,
-                  type: t
-                }
-              }
-            },
-              function (err, result) {
-                if (err) {
-                  res.send(err);
-                  error = true;
-                }
-              })
-          }
-
-        }
-        if (slot == "slot2" && !error) {
-          acMember.updateOne({
-            id: ac_id,
-            "schadule.day": day
-          }, {
-            $set: {
-              "schadule.$.slot2": {
-                location: l,
-                course: course_na
-              }
-            }
-          },
-            function (err, result) {
-              if (err) {
-                res.send(err);
-                error = true;
-              }
-            })
-
-          if (!error) {
-            course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-              if (err) {
-                res.send(err);
-              }
-            });
-            course.updateOne({
-              name: course_na,
-              "slots.day": day
-            }, {
-              $set: {
-                "slots.$.slot2": {
-                  instructorID: ac_id,
-                  location: l,
-                  type: t
-                }
-              }
-            },
-              function (err, result) {
-                if (err) {
-                  res.send(err);
-                  error = true;
-                }
-
-              })
-          }
-        }
-        if (slot == "slot3" && !error) {
-          acMember.updateOne({
-            id: ac_id,
-            "schadule.day": day
-          }, {
-            $set: {
-              "schadule.$.slot3": {
-                location: l,
-                course: course_na
-              }
-            }
-          },
-            function (err, result) {
-              if (err) {
-                res.send(err);
-                error = true;
-              }
-            })
-          if (!error) {
-            course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-              if (err) {
-                res.send(err);
-              }
-            });
-            course.updateOne({
-              name: course_na,
-              "slots.day": day
-            }, {
-              $set: {
-                "slots.$.slot3": {
-                  instructorID: ac_id,
-                  location: l,
-                  type: t
-                }
-              }
-            },
-              function (err, result) {
-                if (err) {
-                  res.send(err);
-                  error = true;
-                }
-
-              })
-          }
-
-        }
-        if (slot == "slot4" && !error) {
-          acMember.updateOne({
-            id: ac_id,
-            "schadule.day": day
-          }, {
-            $set: {
-              "schadule.$.slot4": {
-                location: l,
-                course: course_na
-              }
-            }
-          },
-            function (err, result) {
-              if (err) {
-                res.send(err);
-                error = true;
-              }
-
-            })
-
-
-          if (!error) {
-            course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-              if (err) {
-                res.send(err);
-              }
-            });
-            course.updateOne({
-              name: course_na,
-              "slots.day": day
-            }, {
-              $set: {
-                "slots.$.slot4": {
-                  instructorID: ac_id,
-                  location: l,
-                  type: t
-                }
-              }
-            },
-              function (err, result) {
-                if (err) {
-                  res.send(err);
-                  error = true;
-                }
-
-              })
-          }
-
-        }
-        if (slot == "slot5" && !error) {
-          acMember.updateOne({
-            id: ac_id,
-            "schadule.day": day
-          }, {
-            $set: {
-              "schadule.$.slot5": {
-                location: l,
-                course: course_na
-              }
-            }
-          },
-            function (err, result) {
-              if (err) {
-                res.send(err);
-                error = true;
-              }
-
-            })
-
-          if (!error) {
-            course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-              if (err) {
-                res.send(err);
-              }
-            });
-            course.updateOne({
-              name: course_na,
-              "slots.day": day
-            }, {
-              $set: {
-                "slots.$.slot5": {
-                  instructorID: ac_id,
-                  location: l,
-                  type: t
-                }
-              }
-            },
-              function (err, result) {
-                if (err) {
-                  res.send(err);
-                  error = true;
-                }
-
-              })
-          }
-        }
-
-
-      }
-    })
-  })
-  //Instructor
-  // app.delete("/delete_ac_from_course", function (req, res) {
-  //   const course_na = req.body.course_name;
-  //   const ins_id = req.body.acMember_id;
-  //   course.findOneAndUpdate({ name: course_na }, { $pull: { ta: ins_id } }, function (err) {
-  //     if (err) {
-  //       res.send(err);
-  //     }
-  //   });
-
-  // })
-  // //Instructor
-  app.delete("/delete_ac_slot_from_course", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkINS(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const course_na = req.body.course_name;
-    const ac_id = req.body.acMember_id;
-    const slot = req.body.slot;
-    const day = req.body.day;
-    if (!slot || !day || !ac_id || !course_na) {
-      return res.send("there is some missing data You must enter");
-    }
-    await acMember.findOne({ id: ac_id }, async function (err, result) {
-      if (err) {
-        return res.send(err);
-      }
-      if (!result)
-        return res.send("this is an invalid input2");
-      else {
-        let arr = JSON.parse(JSON.stringify(result.schadule));
-        for (let i = 0; i < arr.length; i++) {
-          if (arr[i].day == day) {
-            if ("slot1" == slot && arr[i].slot1 != "free") {
-              if (arr[i].slot1.course == course_na)
-                arr[i].slot1 = "free";
-            }
-            else if ("slot2" == slot && arr[i].slot2 != "free") {
-              if (arr[i].slot2.course == course_na)
-                arr[i].slot2 = "free";
-            }
-
-
-            else if ("slot3" == slot && arr[i].slot3 != "free") {
-              if (arr[i].slot3.course == course_na)
-                arr[i].slot3 = "free";
-            }
-            else if ("slot4" == slot && arr[i].slot4 != "free") {
-              if (arr[i].slot4.course == course_na)
-                arr[i].slot4 = "free";
-            }
-            else if ("slot5" == slot && arr[i].slot5 != "free") {
-              if (arr[i].slot5.course == course_na)
-                arr[i].slot5 = "free";
-            }
-          }
-        }
-        result.schadule = arr;
-
-        await result.save();
-        /////////////////////////course
-        await course.findOne({ name: course_na }, async function (err, result2) {
-          if (err) {
-            return res.send(err);
-          }
-          if (!result2)
-            return res.send("this is an invalid input2");
-          else {
-            let temp = JSON.parse(JSON.stringify(result2.slots));
-            for (let j = 0; j < temp.length; j++) {
-              if (temp[j].day == day) {
-                if ("slot1" == slot && temp[j].slot1 != "free") {
-                  if (temp[j].slot1.instructorID == ac_id) {
-                    temp[j].slot1.instructorID = "";
-                    result2.covarge -= 1.5;
-
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
-                }
-                else if ("slot2" == slot && temp[j].slot2 != "free") {
-                  if (temp[j].slot2.instructorID == ac_id) {
-                    temp[j].slot2.instructorID = "";
-                    result2.covarge -= 1.5;
-
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
-                }
-                else if ("slot3" == slot && temp[j].slot3 != "free") {
-                  if (temp[j].slot3.instructorID == ac_id) {
-                    temp[j].slot3.instructorID = "";
-                    result2.covarge -= 1.5;
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
-                }
-                else if ("slot4" == slot && temp[j].slot4 != "free") {
-                  if (temp[j].slot4.instructorID == ac_id) {
-                    temp[j].slot4.instructorID = "";
-                    result2.covarge -= 1.5;
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
-                }
-                else if ("slot5" == slot && temp[j].slot5 != "free") {
-                  if (temp[j].slot5.instructorID == ac_id) {
-                    temp[j].slot5.instructorID = "";
-                    result2.covarge -= 1.5;
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
-                }
-              }
-            }
-            result2.slots = temp;
-
-            await result2.save();
-            return res.send("done")
-          }
 
         })
       }
 
-    })
-  })
-
-  //Instructor
-  app.put("/update_ac_slot_in_course", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkINS(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const course_na = req.body.course_name;
-    const ac_id = req.body.acMember_id;
-    const slot = req.body.oldslot;
-    const day = req.body.oldday;
-    const newslot = req.body.newslot;
-    const newday = req.body.newday;
-    if (!slot || !day || !ac_id || !course_na || !newslot || !newday) {
-      return res.send("there is some missing data You must enter");
-    }
-    var error = false;
-    await acMember.findOne({ id: ac_id }, async function (err, result) {
-      if (err) {
-        return res.send(err);
+      if (!error) {
+        course.findOneAndUpdate({
+          name: course_na
+        }, {
+          $inc: {
+            covarge: 1.5
+          }
+        }, function (err) {
+          if (err) {
+            error = true;
+            res.send(err);
+          }
+        })
       }
-      if (!result)
-        return res.send("this is an invalid input2");
-      else {
-        let arr = JSON.parse(JSON.stringify(result.schadule));
-        for (let i = 0; i < arr.length; i++) {
-          if (arr[i].day == day) {
-            if ("slot1" == slot && arr[i].slot1 != "free") {
-              if (arr[i].slot1.course == course_na)
-                arr[i].slot1 = "free";
+      if (slot == "slot1" && !error) {
+
+
+        acMember.updateOne({
+          id: ac_id,
+          "schadule.day": day,
+          "schadule.slot1": "free"
+        }, {
+          $set: {
+            "schadule.$.slot1": {
+              location: l,
+              course: course_na
             }
-            else if ("slot2" == slot && arr[i].slot2 != "free") {
-              if (arr[i].slot2.course == course_na)
-                arr[i].slot2 = "free";
+          }
+        },
+          function (err, result) {
+            if (err) {
+              res.send(err);
+              error = true;
             }
 
 
-            else if ("slot3" == slot && arr[i].slot3 != "free") {
-              if (arr[i].slot3.course == course_na)
-                arr[i].slot3 = "free";
+
+
+          })
+
+
+        if (!error) {
+
+          course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+            if (err) {
+              res.send(err);
             }
-            else if ("slot4" == slot && arr[i].slot4 != "free") {
-              if (arr[i].slot4.course == course_na)
-                arr[i].slot4 = "free";
+          });
+          course.updateOne({
+            name: course_na,
+            "slots.day": day,
+            "slots.slot1.instructorID": ""
+          }, {
+            $set: {
+              "slots.$.slot1": {
+                instructorID: ac_id,
+                location: l,
+                type: t
+              }
             }
-            else if ("slot5" == slot && arr[i].slot5 != "free") {
-              if (arr[i].slot5.course == course_na)
-                arr[i].slot5 = "free";
+          },
+            function (err, result) {
+              if (err) {
+                res.send(err);
+                error = true;
+              }
+            })
+        }
+
+      }
+      if (slot == "slot2" && !error) {
+        acMember.updateOne({
+          id: ac_id,
+          "schadule.day": day
+        }, {
+          $set: {
+            "schadule.$.slot2": {
+              location: l,
+              course: course_na
             }
+          }
+        },
+          function (err, result) {
+            if (err) {
+              res.send(err);
+              error = true;
+            }
+          })
+
+        if (!error) {
+          course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+            if (err) {
+              res.send(err);
+            }
+          });
+          course.updateOne({
+            name: course_na,
+            "slots.day": day
+          }, {
+            $set: {
+              "slots.$.slot2": {
+                instructorID: ac_id,
+                location: l,
+                type: t
+              }
+            }
+          },
+            function (err, result) {
+              if (err) {
+                res.send(err);
+                error = true;
+              }
+
+            })
+        }
+      }
+      if (slot == "slot3" && !error) {
+        acMember.updateOne({
+          id: ac_id,
+          "schadule.day": day
+        }, {
+          $set: {
+            "schadule.$.slot3": {
+              location: l,
+              course: course_na
+            }
+          }
+        },
+          function (err, result) {
+            if (err) {
+              res.send(err);
+              error = true;
+            }
+          })
+        if (!error) {
+          course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+            if (err) {
+              res.send(err);
+            }
+          });
+          course.updateOne({
+            name: course_na,
+            "slots.day": day
+          }, {
+            $set: {
+              "slots.$.slot3": {
+                instructorID: ac_id,
+                location: l,
+                type: t
+              }
+            }
+          },
+            function (err, result) {
+              if (err) {
+                res.send(err);
+                error = true;
+              }
+
+            })
+        }
+
+      }
+      if (slot == "slot4" && !error) {
+        acMember.updateOne({
+          id: ac_id,
+          "schadule.day": day
+        }, {
+          $set: {
+            "schadule.$.slot4": {
+              location: l,
+              course: course_na
+            }
+          }
+        },
+          function (err, result) {
+            if (err) {
+              res.send(err);
+              error = true;
+            }
+
+          })
+
+
+        if (!error) {
+          course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+            if (err) {
+              res.send(err);
+            }
+          });
+          course.updateOne({
+            name: course_na,
+            "slots.day": day
+          }, {
+            $set: {
+              "slots.$.slot4": {
+                instructorID: ac_id,
+                location: l,
+                type: t
+              }
+            }
+          },
+            function (err, result) {
+              if (err) {
+                res.send(err);
+                error = true;
+              }
+
+            })
+        }
+
+      }
+      if (slot == "slot5" && !error) {
+        acMember.updateOne({
+          id: ac_id,
+          "schadule.day": day
+        }, {
+          $set: {
+            "schadule.$.slot5": {
+              location: l,
+              course: course_na
+            }
+          }
+        },
+          function (err, result) {
+            if (err) {
+              res.send(err);
+              error = true;
+            }
+
+          })
+
+        if (!error) {
+          course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+            if (err) {
+              res.send(err);
+            }
+          });
+          course.updateOne({
+            name: course_na,
+            "slots.day": day
+          }, {
+            $set: {
+              "slots.$.slot5": {
+                instructorID: ac_id,
+                location: l,
+                type: t
+              }
+            }
+          },
+            function (err, result) {
+              if (err) {
+                res.send(err);
+                error = true;
+              }
+
+            })
+        }
+      }
+
+
+    }
+  })
+})
+
+// //Instructor
+app.post("/delete_ac_slot_from_course", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const course_na = req.body.course_name;
+  const ac_id = req.body.acMember_id;
+  const slot = req.body.slot;
+  const day = req.body.day;
+  if (!slot || !day || !ac_id || !course_na) {
+    return res.send("there is some missing data You must enter");
+  }
+  await acMember.findOne({ id: ac_id }, async function (err, result) {
+    if (err) {
+      return res.send(err);
+    }
+    if (!result)
+      return res.send("this is an invalid input2");
+    else {
+      let arr = JSON.parse(JSON.stringify(result.schadule));
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i].day == day) {
+          if ("slot1" == slot && arr[i].slot1 != "free") {
+            if (arr[i].slot1.course == course_na)
+              arr[i].slot1 = "free";
+          }
+          else if ("slot2" == slot && arr[i].slot2 != "free") {
+            if (arr[i].slot2.course == course_na)
+              arr[i].slot2 = "free";
+          }
+
+
+          else if ("slot3" == slot && arr[i].slot3 != "free") {
+            if (arr[i].slot3.course == course_na)
+              arr[i].slot3 = "free";
+          }
+          else if ("slot4" == slot && arr[i].slot4 != "free") {
+            if (arr[i].slot4.course == course_na)
+              arr[i].slot4 = "free";
+          }
+          else if ("slot5" == slot && arr[i].slot5 != "free") {
+            if (arr[i].slot5.course == course_na)
+              arr[i].slot5 = "free";
           }
         }
-        result.schadule = arr;
+      }
+      result.schadule = arr;
 
-        await result.save();
-        /////////////////////////course
-        await course.findOne({ name: course_na }, async function (err, result2) {
-          if (err) {
-            return res.send(err);
-          }
-          if (!result2)
-            return res.send("this is an invalid input2");
-          else {
-            let temp = JSON.parse(JSON.stringify(result2.slots));
-            for (let j = 0; j < temp.length; j++) {
-              if (temp[j].day == day) {
-                if ("slot1" == slot && temp[j].slot1 != "free") {
-                  if (temp[j].slot1.instructorID == ac_id) {
-                    temp[j].slot1.instructorID = "";
-                    result2.covarge -= 1.5;
+      await result.save();
+      /////////////////////////course
+      await course.findOne({ name: course_na }, async function (err, result2) {
+        if (err) {
+          return res.send(err);
+        }
+        if (!result2)
+          return res.send("this is an invalid input2");
+        else {
+          let temp = JSON.parse(JSON.stringify(result2.slots));
+          for (let j = 0; j < temp.length; j++) {
+            if (temp[j].day == day) {
+              if ("slot1" == slot && temp[j].slot1 != "free") {
+                if (temp[j].slot1.instructorID == ac_id) {
+                  temp[j].slot1.instructorID = "";
+                  result2.covarge -= 1.5;
 
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
                 }
-                else if ("slot2" == slot && temp[j].slot2 != "free") {
-                  if (temp[j].slot2.instructorID == ac_id) {
-                    temp[j].slot2.instructorID = "";
-                    result2.covarge -= 1.5;
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot2" == slot && temp[j].slot2 != "free") {
+                if (temp[j].slot2.instructorID == ac_id) {
+                  temp[j].slot2.instructorID = "";
+                  result2.covarge -= 1.5;
 
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
                 }
-                else if ("slot3" == slot && temp[j].slot3 != "free") {
-                  if (temp[j].slot3.instructorID == ac_id) {
-                    temp[j].slot3.instructorID = "";
-                    result2.covarge -= 1.5;
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
                 }
-                else if ("slot4" == slot && temp[j].slot4 != "free") {
-                  if (temp[j].slot4.instructorID == ac_id) {
-                    temp[j].slot4.instructorID = "";
-                    result2.covarge -= 1.5;
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
+              }
+              else if ("slot3" == slot && temp[j].slot3 != "free") {
+                if (temp[j].slot3.instructorID == ac_id) {
+                  temp[j].slot3.instructorID = "";
+                  result2.covarge -= 1.5;
                 }
-                else if ("slot5" == slot && temp[j].slot5 != "free") {
-                  if (temp[j].slot5.instructorID == ac_id) {
-                    temp[j].slot5.instructorID = "";
-                    result2.covarge -= 1.5;
-                  }
-                  else {
-                    return res.send("this is not the Academic member you want to remove")
-                  }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot4" == slot && temp[j].slot4 != "free") {
+                if (temp[j].slot4.instructorID == ac_id) {
+                  temp[j].slot4.instructorID = "";
+                  result2.covarge -= 1.5;
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot5" == slot && temp[j].slot5 != "free") {
+                if (temp[j].slot5.instructorID == ac_id) {
+                  temp[j].slot5.instructorID = "";
+                  result2.covarge -= 1.5;
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
                 }
               }
             }
-            result2.slots = temp;
+          }
+          result2.slots = temp;
 
-            await result2.save();
+          await result2.save();
+          return res.send("done")
+        }
 
-            await acMember.find({
-              id: tokenId
-              // instructor: true,
-            }, async function (err, result) { //the token
-              if (err) {
-                res.send("err");
-                error = true;
-              } else {
-                if (!error) {
-                  course.findOneAndUpdate({
-                    name: course_na
-                  }, {
-                    $inc: {
-                      covarge: 1.5
-                    }
-                  }, function (err) {
-                    if (err) {
-                      error = true;
-                      res.send(err);
+      })
+    }
+
+  })
+})
+
+//Instructor
+app.put("/update_ac_slot_in_course", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const course_na = req.body.course_name;
+  const ac_id = req.body.acMember_id;
+  const slot = req.body.oldslot;
+  const day = req.body.oldday;
+  const newslot = req.body.newslot;
+  const newday = req.body.newday;
+  if (!slot || !day || !ac_id || !course_na || !newslot || !newday) {
+    return res.send("there is some missing data You must enter");
+  }
+  var error = false;
+  await acMember.findOne({ id: ac_id }, async function (err, result) {
+    if (err) {
+      return res.send(err);
+    }
+    if (!result)
+      return res.send("this is an invalid input2");
+    else {
+      let arr = JSON.parse(JSON.stringify(result.schadule));
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i].day == day) {
+          if ("slot1" == slot && arr[i].slot1 != "free") {
+            if (arr[i].slot1.course == course_na)
+              arr[i].slot1 = "free";
+          }
+          else if ("slot2" == slot && arr[i].slot2 != "free") {
+            if (arr[i].slot2.course == course_na)
+              arr[i].slot2 = "free";
+          }
+
+
+          else if ("slot3" == slot && arr[i].slot3 != "free") {
+            if (arr[i].slot3.course == course_na)
+              arr[i].slot3 = "free";
+          }
+          else if ("slot4" == slot && arr[i].slot4 != "free") {
+            if (arr[i].slot4.course == course_na)
+              arr[i].slot4 = "free";
+          }
+          else if ("slot5" == slot && arr[i].slot5 != "free") {
+            if (arr[i].slot5.course == course_na)
+              arr[i].slot5 = "free";
+          }
+        }
+      }
+      result.schadule = arr;
+
+      await result.save();
+      /////////////////////////course
+      await course.findOne({ name: course_na }, async function (err, result2) {
+        if (err) {
+          return res.send(err);
+        }
+        if (!result2)
+          return res.send("this is an invalid input2");
+        else {
+          let temp = JSON.parse(JSON.stringify(result2.slots));
+          for (let j = 0; j < temp.length; j++) {
+            if (temp[j].day == day) {
+              if ("slot1" == slot && temp[j].slot1 != "free") {
+                if (temp[j].slot1.instructorID == ac_id) {
+                  temp[j].slot1.instructorID = "";
+                  result2.covarge -= 1.5;
+
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot2" == slot && temp[j].slot2 != "free") {
+                if (temp[j].slot2.instructorID == ac_id) {
+                  temp[j].slot2.instructorID = "";
+                  result2.covarge -= 1.5;
+
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot3" == slot && temp[j].slot3 != "free") {
+                if (temp[j].slot3.instructorID == ac_id) {
+                  temp[j].slot3.instructorID = "";
+                  result2.covarge -= 1.5;
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot4" == slot && temp[j].slot4 != "free") {
+                if (temp[j].slot4.instructorID == ac_id) {
+                  temp[j].slot4.instructorID = "";
+                  result2.covarge -= 1.5;
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+              else if ("slot5" == slot && temp[j].slot5 != "free") {
+                if (temp[j].slot5.instructorID == ac_id) {
+                  temp[j].slot5.instructorID = "";
+                  result2.covarge -= 1.5;
+                }
+                else {
+                  return res.send("this is not the Academic member you want to remove")
+                }
+              }
+            }
+          }
+          result2.slots = temp;
+
+          await result2.save();
+
+          await acMember.find({
+            id: tokenId
+            // instructor: true,
+          }, async function (err, result) { //the token
+            if (err) {
+              res.send("err");
+              error = true;
+            } else {
+              if (!error) {
+                course.findOneAndUpdate({
+                  name: course_na
+                }, {
+                  $inc: {
+                    covarge: 1.5
+                  }
+                }, function (err) {
+                  if (err) {
+                    error = true;
+                    res.send(err);
+                  }
+                })
+              }
+              var l = "";
+              var t = "";
+              if (!error) {
+                await course.find({
+                  name: course_na,
+                }, function (err, result) {
+
+                  (result[0].slots).forEach((x) => {
+
+
+                    if (x.day == newday) {
+                      if ("slot1" == newslot) {
+
+                        l = x.slot1.location;
+                        t = x.slot1.type;
+                      }
+                      if ("slot2" == newslot) {
+
+                        l = x.slot2.location;
+                        t = x.slot2.type;
+                      }
+                      if ("slot3" == newslot) {
+                        l = x.slot3.location;
+                        t = x.slot3.type;
+                      }
+                      if ("slot4" == newslot) {
+                        l = x.slot4.location;
+                        t = x.slot4.type;
+                      }
+                      if ("slot5" == newslot) {
+
+                        l = x.slot5.location;
+                        t = x.slot5.type;
+                      }
+
                     }
                   })
+
+                })
+              }
+
+              if (!error) {
+                course.findOneAndUpdate({
+                  name: course_na
+                }, {
+                  $inc: {
+                    covarge: 1.5
+                  }
+                }, function (err) {
+                  if (err) {
+                    error = true;
+                    res.send(err);
+                  }
+                })
+
+                if (newslot == "slot1" && !error) {
+
+
+                  acMember.updateOne({
+                    id: ac_id,
+                    "schadule.day": newday,
+                    "schadule.slot1": "free"
+                  }, {
+                    $set: {
+                      "schadule.$.slot1": {
+                        location: l,
+                        course: course_na
+                      }
+                    }
+                  },
+                    function (err, result) {
+                      if (err) {
+                        res.send(err);
+                        error = true;
+                      }
+
+
+
+
+                    })
+
+
+                  if (!error) {
+                    course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+                      if (err) {
+                        res.send(err);
+                      }
+                    });
+                    course.updateOne({
+                      name: course_na,
+                      "slots.day": newday,
+                      "slots.slot1.instructorID": ""
+                    }, {
+                      $set: {
+                        "slots.$.slot1": {
+                          instructorID: ac_id,
+                          location: l,
+                          type: t
+                        }
+                      }
+                    },
+                      function (err, result) {
+                        if (err) {
+                          res.send(err);
+                          error = true;
+                        }
+                      })
+                  }
+
                 }
-                var l = "";
-                var t = "";
-                if (!error) {
-                  await course.find({
-                    name: course_na,
-                  }, function (err, result) {
-
-                    (result[0].slots).forEach((x) => {
-
-
-                      if (x.day == newday) {
-                        if ("slot1" == newslot) {
-
-                          l = x.slot1.location;
-                          t = x.slot1.type;
-                        }
-                        if ("slot2" == newslot) {
-
-                          l = x.slot2.location;
-                          t = x.slot2.type;
-                        }
-                        if ("slot3" == newslot) {
-                          l = x.slot3.location;
-                          t = x.slot3.type;
-                        }
-                        if ("slot4" == newslot) {
-                          l = x.slot4.location;
-                          t = x.slot4.type;
-                        }
-                        if ("slot5" == newslot) {
-
-                          l = x.slot5.location;
-                          t = x.slot5.type;
-                        }
-
+                if (newslot == "slot2" && !error) {
+                  acMember.updateOne({
+                    id: ac_id,
+                    "schadule.day": newday
+                  }, {
+                    $set: {
+                      "schadule.$.slot2": {
+                        location: l,
+                        course: course_na
+                      }
+                    }
+                  },
+                    function (err, result) {
+                      if (err) {
+                        res.send(err);
+                        error = true;
                       }
                     })
 
-                  })
-                }
+                  if (!error) {
+                    course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+                      if (err) {
+                        res.send(err);
+                      }
+                    });
+                    course.updateOne({
+                      name: course_na,
+                      "slots.day": newday
+                    }, {
+                      $set: {
+                        "slots.$.slot2": {
+                          instructorID: ac_id,
+                          location: l,
+                          type: t
+                        }
+                      }
+                    },
+                      function (err, result) {
+                        if (err) {
+                          res.send(err);
+                          error = true;
+                        }
 
-                if (!error) {
-                  course.findOneAndUpdate({
-                    name: course_na
+                      })
+                  }
+                }
+                if (newslot == "slot3" && !error) {
+                  acMember.updateOne({
+                    id: ac_id,
+                    "schadule.day": newday
                   }, {
-                    $inc: {
-                      covarge: 1.5
-                    }
-                  }, function (err) {
-                    if (err) {
-                      error = true;
-                      res.send(err);
-                    }
-                  })
-
-                  if (newslot == "slot1" && !error) {
-
-
-                    acMember.updateOne({
-                      id: ac_id,
-                      "schadule.day": newday,
-                      "schadule.slot1": "free"
-                    }, {
-                      $set: {
-                        "schadule.$.slot1": {
-                          location: l,
-                          course: course_na
-                        }
+                    $set: {
+                      "schadule.$.slot3": {
+                        location: l,
+                        course: course_na
                       }
-                    },
-                      function (err, result) {
-                        if (err) {
-                          res.send(err);
-                          error = true;
-                        }
-
-
-
-
-                      })
-
-
-                    if (!error) {
-                      course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-                        if (err) {
-                          res.send(err);
-                        }
-                      });
-                      course.updateOne({
-                        name: course_na,
-                        "slots.day": newday,
-                        "slots.slot1.instructorID": ""
-                      }, {
-                        $set: {
-                          "slots.$.slot1": {
-                            instructorID: ac_id,
-                            location: l,
-                            type: t
-                          }
-                        }
-                      },
-                        function (err, result) {
-                          if (err) {
-                            res.send(err);
-                            error = true;
-                          }
-                        })
                     }
-
-                  }
-                  if (newslot == "slot2" && !error) {
-                    acMember.updateOne({
-                      id: ac_id,
-                      "schadule.day": newday
-                    }, {
-                      $set: {
-                        "schadule.$.slot2": {
-                          location: l,
-                          course: course_na
-                        }
+                  },
+                    function (err, result) {
+                      if (err) {
+                        res.send(err);
+                        error = true;
                       }
-                    },
-                      function (err, result) {
-                        if (err) {
-                          res.send(err);
-                          error = true;
-                        }
-                      })
-
-                    if (!error) {
-                      course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-                        if (err) {
-                          res.send(err);
-                        }
-                      });
-                      course.updateOne({
-                        name: course_na,
-                        "slots.day": newday
-                      }, {
-                        $set: {
-                          "slots.$.slot2": {
-                            instructorID: ac_id,
-                            location: l,
-                            type: t
-                          }
-                        }
-                      },
-                        function (err, result) {
-                          if (err) {
-                            res.send(err);
-                            error = true;
-                          }
-
-                        })
-                    }
-                  }
-                  if (newslot == "slot3" && !error) {
-                    acMember.updateOne({
-                      id: ac_id,
-                      "schadule.day": newday
-                    }, {
-                      $set: {
-                        "schadule.$.slot3": {
-                          location: l,
-                          course: course_na
-                        }
+                    })
+                  if (!error) {
+                    course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+                      if (err) {
+                        res.send(err);
                       }
-                    },
-                      function (err, result) {
-                        if (err) {
-                          res.send(err);
-                          error = true;
-                        }
-                      })
-                    if (!error) {
-                      course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-                        if (err) {
-                          res.send(err);
-                        }
-                      });
-                      course.updateOne({
-                        name: course_na,
-                        "slots.day": newday
-                      }, {
-                        $set: {
-                          "slots.$.slot3": {
-                            instructorID: ac_id,
-                            location: l,
-                            type: t
-                          }
-                        }
-                      },
-                        function (err, result) {
-                          if (err) {
-                            res.send(err);
-                            error = true;
-                          }
-
-                        })
-                    }
-
-                  }
-                  if (newslot == "slot4" && !error) {
-                    acMember.updateOne({
-                      id: ac_id,
-                      "schadule.day": newday
+                    });
+                    course.updateOne({
+                      name: course_na,
+                      "slots.day": newday
                     }, {
                       $set: {
-                        "schadule.$.slot4": {
+                        "slots.$.slot3": {
+                          instructorID: ac_id,
                           location: l,
-                          course: course_na
+                          type: t
                         }
                       }
                     },
@@ -2115,337 +2099,346 @@ async function findC() {
                         }
 
                       })
-
-
-                    if (!error) {
-                      course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-                        if (err) {
-                          res.send(err);
-                        }
-                      });
-                      course.updateOne({
-                        name: course_na,
-                        "slots.day": newday
-                      }, {
-                        $set: {
-                          "slots.$.slot4": {
-                            instructorID: ac_id,
-                            location: l,
-                            type: t
-                          }
-                        }
-                      },
-                        function (err, result) {
-                          if (err) {
-                            res.send(err);
-                            error = true;
-                          }
-
-                        })
-                    }
-
-                  }
-                  if (newslot == "slot5" && !error) {
-                    acMember.updateOne({
-                      id: ac_id,
-                      "schadule.day": newday
-                    }, {
-                      $set: {
-                        "schadule.$.slot5": {
-                          location: l,
-                          course: course_na
-                        }
-                      }
-                    },
-                      function (err, result) {
-                        if (err) {
-                          res.send(err);
-                          error = true;
-                        }
-
-                      })
-
-                    if (!error) {
-                      course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
-                        if (err) {
-                          res.send(err);
-                        }
-                      });
-                      course.updateOne({
-                        name: course_na,
-                        "slots.day": newday
-                      }, {
-                        $set: {
-                          "slots.$.slot5": {
-                            instructorID: ac_id,
-                            location: l,
-                            type: t
-                          }
-                        }
-                      },
-                        function (err, result) {
-                          if (err) {
-                            res.send(err);
-                            error = true;
-                          }
-
-                        })
-                    }
                   }
 
                 }
+                if (newslot == "slot4" && !error) {
+                  acMember.updateOne({
+                    id: ac_id,
+                    "schadule.day": newday
+                  }, {
+                    $set: {
+                      "schadule.$.slot4": {
+                        location: l,
+                        course: course_na
+                      }
+                    }
+                  },
+                    function (err, result) {
+                      if (err) {
+                        res.send(err);
+                        error = true;
+                      }
+
+                    })
+
+
+                  if (!error) {
+                    course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+                      if (err) {
+                        res.send(err);
+                      }
+                    });
+                    course.updateOne({
+                      name: course_na,
+                      "slots.day": newday
+                    }, {
+                      $set: {
+                        "slots.$.slot4": {
+                          instructorID: ac_id,
+                          location: l,
+                          type: t
+                        }
+                      }
+                    },
+                      function (err, result) {
+                        if (err) {
+                          res.send(err);
+                          error = true;
+                        }
+
+                      })
+                  }
+
+                }
+                if (newslot == "slot5" && !error) {
+                  acMember.updateOne({
+                    id: ac_id,
+                    "schadule.day": newday
+                  }, {
+                    $set: {
+                      "schadule.$.slot5": {
+                        location: l,
+                        course: course_na
+                      }
+                    }
+                  },
+                    function (err, result) {
+                      if (err) {
+                        res.send(err);
+                        error = true;
+                      }
+
+                    })
+
+                  if (!error) {
+                    course.findOneAndUpdate({ name: course_na }, { $push: { ta: ac_id } }, function (err) {
+                      if (err) {
+                        res.send(err);
+                      }
+                    });
+                    course.updateOne({
+                      name: course_na,
+                      "slots.day": newday
+                    }, {
+                      $set: {
+                        "slots.$.slot5": {
+                          instructorID: ac_id,
+                          location: l,
+                          type: t
+                        }
+                      }
+                    },
+                      function (err, result) {
+                        if (err) {
+                          res.send(err);
+                          error = true;
+                        }
+
+                      })
+                  }
+                }
+
               }
-            })
-          }
+            }
+          })
+        }
 
-        })
-      }
+      })
+    }
 
-    })
-
-    return res.send("done")
   })
 
+  return res.send("done")
+})
 
-  // HOD
-  app.post("/accept_leave_request", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
 
-    const request_id = req.body.request_id;
-    if (!request_id)
-      return res.send("this is an invalid input");
-    await acMember.findOne({ id: tokenId }, async function (err, result) {
-      if (err) {
-        return res.send(err);
-      }
-      if (!result)
-        return res.send("this is an invalid input2");
-      else {
-        let arr = JSON.parse(JSON.stringify(result.receivedLeavefRequest));
-        for (let i = 0; i < arr.length; i++) {
+// HOD
+app.post("/accept_leave_request", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const request_id = req.body.request_id;
+  if (!request_id)
+    return res.send("this is an invalid input");
+  await acMember.findOne({ id: tokenId }, async function (err, result) {
+    if (err) {
+      return res.send(err);
+    }
+    if (!result)
+      return res.send("this is an invalid input2");
+    else {
+      let arr = JSON.parse(JSON.stringify(result.receivedLeavefRequest));
+      for (let i = 0; i < arr.length; i++) {
 
-          if (arr[i].id == request_id && arr[i].status == "Pending") {
-            arr[i].status = "Accepted";
-            result.receivedLeavefRequest = arr;
-            await result.save();
-            let x = arr[i].from;
+        if (arr[i].id == request_id && arr[i].status == "Pending") {
+          arr[i].status = "Accepted";
+          result.receivedLeavefRequest = arr;
+          await result.save();
+          let x = arr[i].from;
 
-            acMember.findOne({ id: x }, async function (err, foundUser) {
-              if (err) {
-                return res.send(err);
-              }
-              if (!foundUser)
-                return res.send("there is an invalid input");
-              else {
-                let temp = JSON.parse(JSON.stringify(foundUser.sentLeaveRequest));
-                for (let i = 0; i < temp.length; i++) {
-                  if (temp[i].id == request_id) {
-                    temp[i].status = "Accepted";
-                    break;
-                  }
+          acMember.findOne({ id: x }, async function (err, foundUser) {
+            if (err) {
+              return res.send(err);
+            }
+            if (!foundUser)
+              return res.send("there is an invalid input");
+            else {
+              let temp = JSON.parse(JSON.stringify(foundUser.sentLeaveRequest));
+              for (let i = 0; i < temp.length; i++) {
+                if (temp[i].id == request_id) {
+                  temp[i].status = "Accepted";
+                  break;
                 }
-                foundUser.sentLeaveRequest = temp;
-                await foundUser.save();
-
-                return res.send("successfully updated sender and reciver");
-
               }
-            })
-          }
+              foundUser.sentLeaveRequest = temp;
+              await foundUser.save();
+
+              return res.send("successfully updated sender and reciver");
+
+            }
+          })
+        }
+      }
+    }
+
+
+  })
+})
+app.post("/reject_leave_request", authanticateToken, async function (req, res) {
+  const tokenId = req.userID;
+  const request_id = req.body.request_id;
+  const reason = req.body.reason;
+  if (!request_id)
+    return res.send("this is an invalid input");
+  await acMember.findOne({ id: tokenId }, async function (err, result) {
+    if (err) {
+      return res.send(err);
+    }
+    if (!result)
+      return res.send("this is an invalid input2");
+    else {
+      let arr = JSON.parse(JSON.stringify(result.receivedLeavefRequest));
+      for (let i = 0; i < arr.length; i++) {
+
+        if (arr[i].id == request_id && arr[i].status == "Pending") {
+          arr[i].status = "Rejected";
+          arr[i].request = reason;
+          result.receivedLeavefRequest = arr;
+          await result.save();
+          let x = arr[i].from;
+
+          acMember.findOne({ id: x }, async function (err, foundUser) {
+            if (err) {
+              return res.send(err);
+            }
+            if (!foundUser)
+              return res.send("there is an invalid input");
+            else {
+              let temp = JSON.parse(JSON.stringify(foundUser.sentLeaveRequest));
+              for (let i = 0; i < temp.length; i++) {
+                if (temp[i].id == request_id) {
+                  temp[i].status = "Rejected";
+                  temp[i].request = reason;
+                  break;
+                }
+              }
+              foundUser.sentLeaveRequest = temp;
+              await foundUser.save();
+
+              return res.send("successfully updated sender and reciver");
+
+            }
+          })
+        }
+      }
+    }
+
+
+  })
+})
+app.post("/accept_change_day_off_request", authanticateToken, async function (req, res) {
+  //const Hod_id = req.userId;
+  const tokenId = req.userID;
+  const request_id = req.body.request_id;
+  console.log(request_id+"555555555"+tokenId);
+  if (!request_id)
+    return res.send("this is an invalid input");
+  await acMember.findOne({ id: tokenId }, async function (err, result) {
+    if (err) {
+      return res.send(err);
+    }
+    if (!result)
+      return res.send("this is an invalid input2");
+    else {
+      let arr = JSON.parse(JSON.stringify(result.receivedDayoffRequest));
+      for (let i = 0; i < arr.length; i++) {
+
+        if (arr[i].id == request_id && arr[i].status == "Pending") {
+          arr[i].status = "Accepted";
+          result.receivedDayoffRequest = arr;
+          await result.save();
+          let x = arr[i].from;
+
+          acMember.findOneAndUpdate({ id: x }, { dayOff: result.receivedDayoffRequest[i].day }, async function (err, foundUser) {
+            if (err) {
+              return res.send(err);
+            }
+            if (!foundUser)
+              return res.send("there is an invalid input");
+            else {
+              let temp = JSON.parse(JSON.stringify(foundUser.sentDayoffRequest));
+              for (let i = 0; i < temp.length; i++) {
+                if (temp[i].id == request_id) {
+                  temp[i].status = "Accepted";
+                  break;
+                }
+              }
+
+              foundUser.sentDayoffRequest = temp;
+              await foundUser.save();
+
+              return res.send("successfully updated sender and reciver");
+            }
+          })
         }
       }
 
+    }
 
-    })
+
   })
-  app.post("/reject_leave_request", authanticateToken, async function (req, res) {
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-    const request_id = req.body.request_id;
-    const reason = req.body.reason;
-    if (!request_id)
-      return res.send("this is an invalid input");
-    await acMember.findOne({ id: "tokenId" }, async function (err, result) {
-      if (err) {
-        return res.send(err);
-      }
-      if (!result)
-        return res.send("this is an invalid input2");
-      else {
-        let arr = JSON.parse(JSON.stringify(result.receivedLeavefRequest));
-        for (let i = 0; i < arr.length; i++) {
+})
 
-          if (arr[i].id == request_id && arr[i].status == "Pending") {
-            arr[i].status = "Rejected";
-            arr[i].request = reason;
-            result.receivedLeavefRequest = arr;
-            await result.save();
-            let x = arr[i].from;
 
-            acMember.findOne({ id: x }, async function (err, foundUser) {
-              if (err) {
-                return res.send(err);
-              }
-              if (!foundUser)
-                return res.send("there is an invalid input");
-              else {
-                let temp = JSON.parse(JSON.stringify(foundUser.sentLeaveRequest));
-                for (let i = 0; i < temp.length; i++) {
-                  if (temp[i].id == request_id) {
-                    temp[i].status = "Rejected";
-                    temp[i].request = reason;
-                    break;
-                  }
+app.post('/test', authanticateToken, (req, res) => {
+  acMember.findOne({ id: "ac-222" }, async (err, foundUser) => {
+    const arr = JSON.parse(JSON.stringify(foundUser.receivedDayoffRequest));
+    arr[0].status = "mahmod";
+    foundUser.receivedDayoffRequest = arr;
+    await foundUser.save();
+    res.send(foundUser);
+  })
+})
+
+app.post("/reject_change_day_off_request", authanticateToken, async function (req, res) {
+  //const Hod_id = req.userId;
+  const tokenId = req.userID;
+  const request_id = req.body.request_id;
+  const reason = req.body.reason;
+  if (!request_id)
+    return res.send("this is an invalid input");
+  await acMember.findOne({ id: tokenId }, async function (err, result) {
+    if (err) {
+      return res.send(err);
+    }
+    if (!result)
+      return res.send("this is an invalid input2");
+    else {
+      let arr = JSON.parse(JSON.stringify(result.receivedDayoffRequest));
+      for (let i = 0; i < arr.length; i++) {
+
+        if (arr[i].id == request_id && arr[i].status == "Pending") {
+          arr[i].status = "Rejected";
+          arr[i].reason = reason;
+          result.receivedDayoffRequest = arr;
+          await result.save();
+          let x = arr[i].from;
+
+
+          acMember.findOne({ id: x }, async function (err, foundUser) {
+            if (err) {
+              return res.send(err);
+            }
+            if (!foundUser)
+              return res.send("there is an invalid input");
+            else {
+              let temp = JSON.parse(JSON.stringify(foundUser.sentDayoffRequest));
+              for (let i = 0; i < temp.length; i++) {
+                if (temp[i].id == request_id) {
+                  temp[i].status = "Rejected";
+                  temp[i].reason = reason;
+                  break;
                 }
-                foundUser.sentLeaveRequest = temp;
-                await foundUser.save();
-
-                return res.send("successfully updated sender and reciver");
-
               }
-            })
-          }
+              foundUser.sentDayoffRequest = temp;
+              await foundUser.save();
+
+              return res.send("successfully updated sender  reciver");
+            }
+          })
         }
       }
 
-
-    })
-  })
-  app.post("/accept_change_day_off_request", authanticateToken, async function (req, res) {
-    //const Hod_id = req.userId;
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-
-    const request_id = req.body.request_id;
-    if (!request_id)
-      return res.send("this is an invalid input");
-    await acMember.findOne({ id: tokenId }, async function (err, result) {
-      if (err) {
-        return res.send(err);
-      }
-      if (!result)
-        return res.send("this is an invalid input2");
-      else {
-        let arr = JSON.parse(JSON.stringify(result.receivedDayoffRequest));
-        for (let i = 0; i < arr.length; i++) {
-
-          if (arr[i].id == request_id && arr[i].status == "Pending") {
-            arr[i].status = "Accepted";
-            result.receivedDayoffRequest = arr;
-            await result.save();
-            let x = arr[i].from;
-
-            acMember.findOneAndUpdate({ id: x }, { dayOff: result.receivedDayoffRequest[i].day }, async function (err, foundUser) {
-              if (err) {
-                return res.send(err);
-              }
-              if (!foundUser)
-                return res.send("there is an invalid input");
-              else {
-                let temp = JSON.parse(JSON.stringify(foundUser.sentDayoffRequest));
-                for (let i = 0; i < temp.length; i++) {
-                  if (temp[i].id == request_id) {
-                    temp[i].status = "Accepted";
-                    break;
-                  }
-                }
-                foundUser.sentDayoffRequest = temp;
-                await foundUser.save();
-
-                return res.send("successfully updated sender and reciver");
-              }
-            })
-          }
-        }
-
-      }
+    }
 
 
-    })
   })
 
-  app.post('/test', authanticateToken, (req, res) => {
-    acMember.findOne({ id: "ac-222" }, async (err, foundUser) => {
-      const arr = JSON.parse(JSON.stringify(foundUser.receivedDayoffRequest));
-      arr[0].status = "mahmod";
-      foundUser.receivedDayoffRequest = arr;
-      await foundUser.save();
-      res.send(foundUser);
-    })
-  })
-
-  app.post("/reject_change_day_off_request", authanticateToken, async function (req, res) {
-    //const Hod_id = req.userId;
-    const tokenId = req.userID;
-    let f = await checkHOD(tokenId);
-    if (!f)
-      return res.send("You are not allowed to do so");
-
-    const request_id = req.body.request_id;
-    const reason = req.body.reason;
-    if (!request_id)
-      return res.send("this is an invalid input");
-    await acMember.findOne({ id: tokenId }, async function (err, result) {
-      if (err) {
-        return res.send(err);
-      }
-      if (!result)
-        return res.send("this is an invalid input2");
-      else {
-        let arr = JSON.parse(JSON.stringify(result.receivedDayoffRequest));
-        for (let i = 0; i < arr.length; i++) {
-
-          if (arr[i].id == request_id && arr[i].status == "Pending") {
-            arr[i].status = "Rejected";
-            arr[i].request = reason;
-            result.receivedDayoffRequest = arr;
-            await result.save();
-            let x = arr[i].from;
-
-
-            acMember.findOne({ id: x }, async function (err, foundUser) {
-              if (err) {
-                return res.send(err);
-              }
-              if (!foundUser)
-                return res.send("there is an invalid input");
-              else {
-                let temp = JSON.parse(JSON.stringify(foundUser.sentDayoffRequest));
-                for (let i = 0; i < temp.length; i++) {
-                  if (temp[i].id == request_id) {
-                    temp[i].status = "Rejected";
-                    temp[i].request = reason;
-                    break;
-                  }
-                }
-                foundUser.sentDayoffRequest = temp;
-                await foundUser.save();
-
-                return res.send("successfully updated sender  reciver");
-              }
-            })
-          }
-        }
-
-      }
-
-
-    })
-
-  })
+})
 }
 
 // ashraf 
 {
-
-
+  
   app.get("/viewSlots", authanticateToken, function (req, res) {
     acMember.find({
       coordinator: true,
@@ -2529,6 +2522,7 @@ async function findC() {
       })
       //sender
       var arr = JSON.parse(JSON.stringify(result.slotLinkingSentRequests));
+      result.notification.push({status:"Accepted",id:req.body.id,route:"/ViewSentSlotLinking"});
       var qq = false;
       for (var i = 0; i < arr.length; i++) {
         if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
@@ -2692,6 +2686,7 @@ async function findC() {
                     return res.send("Can't find the date for server of date base")
                   } else {
                     let arr = JSON.parse(JSON.stringify(foundUser.slotLinkingSentRequests));
+                    result.notification.push({status:"Accepted",id:req.body.id,route:"/ViewSentSlotLinking"});
                     for (let i = 0; i < arr.length; i++) {
                       if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                         arr[i].status = "Rejected";
@@ -2737,18 +2732,35 @@ async function findC() {
     }
   }) //done
 
-  app.post("/addSlot", authanticateToken, function (req, res) {
+  app.post("/addSlot", authanticateToken,async function (req, res) {
     try {
       var error = false;
+
+    var location=await locations.findOne({
+        name:req.body.location
+      })
+
+      if(!location){
+        return res.send("there is no location with this name");
+      }
+
       acMember.find({
         id: req.userID,
         coordinator: true
       }, async function (err, result) {
         if (err) {
-          res.send(err);
+          return res.send(err);
           error = true;
         } else {
+
+          if (!result[0]) {
+            return res.send("you cannot add the slot");
+          }
           var cour = result[0].course;
+
+          if (!cour||cour=="") {
+            return res.send("you cannot add the slot");
+          }
 
           if (!error) {
 
@@ -2758,7 +2770,7 @@ async function findC() {
               "schadule.day": req.body.day,
               qq: "free"
             })
-            if (xx) {
+            if (!xx) {
               return res.send("this slot is free");
             }
             if (!error && !xx)
@@ -2784,7 +2796,7 @@ async function findC() {
               }, {
                 $set: {
                   "slots.$.slot1": {
-                    loc: req.body.location,
+                    location: req.body.location,
                     type: req.body.type,
                     instructorID: ""
                   }
@@ -2804,7 +2816,7 @@ async function findC() {
               }, {
                 $set: {
                   "slots.$.slot2": {
-                    loc: req.body.location,
+                    location: req.body.location,
                     type: req.body.type,
                     instructorID: ""
                   }
@@ -2826,7 +2838,7 @@ async function findC() {
               }, {
                 $set: {
                   "slots.$.slot3": {
-                    loc: req.body.location,
+                    location: req.body.location,
                     type: req.body.type,
                     instructorID: ""
                   }
@@ -2848,7 +2860,7 @@ async function findC() {
               }, {
                 $set: {
                   "slots.$.slot4": {
-                    loc: req.body.location,
+                    location: req.body.location,
                     type: req.body.type,
                     instructorID: ""
                   }
@@ -2870,7 +2882,7 @@ async function findC() {
               }, {
                 $set: {
                   "slots.$.slot5": {
-                    loc: req.body.location,
+                    location: req.body.location,
                     type: req.body.type,
                     instructorID: ""
                   }
@@ -2897,9 +2909,11 @@ async function findC() {
     }
   }) // done
   /////////////////////////////////
-  app.delete("/deleteSlot", authanticateToken, function (req, res) {
+  app.post("/deleteSlot", authanticateToken,async function (req, res) {
     try {
       var error = false;
+
+
       acMember.find({
         id: req.userID,
         coordinator: true
@@ -2907,7 +2921,15 @@ async function findC() {
         if (err) {
           return res.send(err);
         } else {
+
+          if (!result[0]) {
+            return res.send("you cannot add the slot");
+          }
           var cour = result[0].course;
+
+          if (!cour||cour=="") {
+            return res.send("you cannot add the slot");
+          }
 
           var qq = JSON.stringify("schadule." + req.body.slot);
           var xx = await course.findOne({
@@ -3030,9 +3052,19 @@ async function findC() {
     }
   }) //done
 
-  app.put("/updateSlot", authanticateToken, function (req, res) {
+  app.put("/updateSlot", authanticateToken,async function (req, res) {
     try {
       var error = false;
+
+      var location=await locations.findOne({
+          name:req.body.location
+        })
+
+        if(!location){
+          return res.send("there is no location with this name");
+        }
+
+
       acMember.find({
         id: req.userID,
         coordinator: true
@@ -3041,7 +3073,15 @@ async function findC() {
           res.send(err);
           error = true;
         } else {
+
+          if (!result[0]) {
+            return res.send("you cannot update the slot");
+          }
           var cour = result[0].course;
+
+          if (!cour||cour=="") {
+            return res.send("you cannot update the slot");
+          }
 
           if (req.body.slot == "slot1" && !error) {
 
@@ -3068,7 +3108,7 @@ async function findC() {
               }, {
                 $set: {
                   "slots.$.slot1": {
-                    loc: req.body.loc,
+                    location: req.body.location,
                     type: req.body.type,
                     instructorID: inst
                   }
@@ -3089,7 +3129,7 @@ async function findC() {
               }, {
                 $set: {
                   "schadule.$.slot1": {
-                    location: req.body.loc,
+                    location: req.body.location,
                     course: cour
                   }
                 }
@@ -3129,7 +3169,7 @@ async function findC() {
             }, {
               $set: {
                 "slots.$.slot2": {
-                  loc: req.body.loc,
+                  location: req.body.location,
                   type: req.body.type,
                   instructorID: inst
                 }
@@ -3150,7 +3190,7 @@ async function findC() {
               }, {
                 $set: {
                   "schadule.$.slot2": {
-                    location: req.body.loc,
+                    location: req.body.location,
                     course: cour
                   }
                 }
@@ -3191,7 +3231,7 @@ async function findC() {
             }, {
               $set: {
                 "slots.$.slot3": {
-                  loc: req.body.loc,
+                  location: req.body.location,
                   type: req.body.type,
                   instructorID: inst
                 }
@@ -3211,7 +3251,7 @@ async function findC() {
               }, {
                 $set: {
                   "schadule.$.slot3": {
-                    location: req.body.loc,
+                    location: req.body.location,
                     course: cour
                   }
                 }
@@ -3252,7 +3292,7 @@ async function findC() {
             }, {
               $set: {
                 "slots.$.slot4": {
-                  loc: req.body.loc,
+                  location: req.body.location,
                   type: req.body.type,
                   instructorID: inst
                 }
@@ -3273,7 +3313,7 @@ async function findC() {
               }, {
                 $set: {
                   "schadule.$.slot4": {
-                    location: req.body.loc,
+                    location: req.body.location,
                     course: cour
                   }
                 }
@@ -3314,7 +3354,7 @@ async function findC() {
             }, {
               $set: {
                 "slots.$.slot5": {
-                  loc: req.body.loc,
+                  location: req.body.location,
                   type: req.body.type,
                   instructorID: inst
                 }
@@ -3336,7 +3376,7 @@ async function findC() {
             }, {
               $set: {
                 "schadule.$.slot5": {
-                  location: req.body.loc,
+                  location: req.body.location,
                   course: cour
                 }
               }
@@ -3360,9 +3400,44 @@ async function findC() {
     }
   }) //done
 
+  app.get("/notification", authanticateToken, async function (req, res) {
+    try {
+      r=await acMember.findOne({
+        id:req.userID
+      })
+      res.send(r.notification);
+    }
+    catch{
+      res.send("Error");
+    }
+  })
+  
   app.post("/sendReplacmentRequest", authanticateToken, async function (req, res) {
     try {
       var error = false;
+
+      var r=await locations.findOne({
+        name:req.body.location
+      })
+      if(!r){
+        return res.send("there is no location with this name");
+      }
+
+      r=await course.findOne({
+        name:req.body.course
+      })
+      if(!r){
+        return res.send("there is no course with this name");
+      }
+
+      r=await acMember.findOne({
+        id:req.body.to
+      })
+
+      if(!r){
+        return res.send("there is no user with this id");
+      }
+
       if (c == undefined) {
         await findC();
       }
@@ -3370,15 +3445,17 @@ async function findC() {
       c.save();
       var reqID = c.requestID;
 
-      acMember.findOneAndUpdate({
-        id: req.body.id
+
+
+  await  acMember.findOneAndUpdate({
+        id: req.body.to
       }, {
         $push: {
           receivedReplacment: {
             request: req.body.request,
             slot: req.body.slot,
             day: req.body.day,
-            date: new Date(req.body.year + "-" + req.body.month + "-" + req.body.day),
+            date: new Date(req.body.date),
             from: req.userID, // loged in id
             course: req.body.course,
             status: "Pending",
@@ -3390,9 +3467,27 @@ async function findC() {
       }, function (err) {
         if (err) {
           error = true;
-          res.send(err);
+         return res.send(err);
         }
       });
+
+      acMember.findOneAndUpdate({
+        id: req.body.to
+      }, {
+        $push: {
+          notification: {
+            status: "Pending",
+            id: reqID,
+            route:"/ViewReceivedReplacment"
+          }
+        }
+      }, function (err) {
+        if (err) {
+          error = true;
+         return res.send(err);
+        }
+      });
+
 
       if (!error) {
         acMember.findOneAndUpdate({
@@ -3403,9 +3498,9 @@ async function findC() {
               request: req.body.request,
               slot: req.body.slot,
               day: req.body.day,
-              to: req.body.id,
+              to: req.body.to,
               course: req.body.course,
-              date: new Date(req.body.year + "-" + req.body.month + "-" + req.body.day),
+              date: new Date(req.body.date),
               status: "Pending",
               location: req.body.location,
               id: reqID
@@ -3413,13 +3508,10 @@ async function findC() {
           }
         }, function (err) {
           if (err) {
-            error = true;
-            res.send(err);
+          return res.send(err);
           }
         });
-
       }
-      if (!error)
         return res.send("SENT");
     }
     catch {
@@ -3436,6 +3528,8 @@ async function findC() {
         if (err)
           res.send(err);
         else {
+          if(!result[0])
+          return res.send("Can't see the schadule")
           return res.send(result[0].schadule);
         }
       })
@@ -3448,6 +3542,8 @@ async function findC() {
   app.post("/replacmentRejection", authanticateToken, async function (req, res) {
     try {
       var loginID = req.userID; // fix
+
+
 
       await acMember.find({
         id: loginID,
@@ -3472,6 +3568,7 @@ async function findC() {
                     return res.send("Can't find the date ")
                   } else {
                     let arr = JSON.parse(JSON.stringify(foundUser.sentReplacment));
+                    foundUser.notification.push({status:"Rejected",id:req.body.id,route:"/ViewSentReplacment"});
                     for (let i = 0; i < arr.length; i++) {
                       if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                         arr[i].status = "Rejected";
@@ -3479,7 +3576,6 @@ async function findC() {
                     }
                     foundUser.sentReplacment = arr;
                     foundUser.save();
-                    console.log("updated sender");
                   }
                 })
 
@@ -3495,7 +3591,7 @@ async function findC() {
           if (err) {
             res.send(err);
           } else if (!foundUser) {
-            return res.send("Can't find the date ")
+            return res.send("Can't find the data ")
           } else {
             let arr = JSON.parse(JSON.stringify(foundUser.receivedReplacment));
             for (let i = 0; i < arr.length; i++) {
@@ -3505,75 +3601,17 @@ async function findC() {
             }
             foundUser.receivedReplacment = arr;
             foundUser.save();
-            console.log("updated reciver");
           }
         })
+
+
 
 
       res.send("Done");
     } catch {
       res.send("ERROR")
     }
-    ////////////////////////////////////////
-    //   try{
-    //   var error = false;
-    //
-    //   acMember.updateOne({
-    //       id: "11", //loged in id
-    //       "receivedReplacment.id": req.body.id
-    //     }, {
-    //       $set: {
-    //         "receivedReplacment.$.status": "Rejected"
-    //       }
-    //     },
-    //     function(err, result) {
-    //       if (err) {
-    //         res.send(err);
-    //         error = true;
-    //       }
-    //
-    //     })
-    //
-    //   var x = "";
-    //   if (!error) {
-    //     await acMember.find({
-    //       id: "11"
-    //     }, function(err, result) {
-    //       if (err) {
-    //         error = true;
-    //         res.send(err);
-    //       } else {
-    //         result[0].receivedReplacment.forEach((y) => {
-    //           if (y.id == req.body.id)
-    //             x = y.from;
-    //         })
-    //       }
-    //     })
-    //   }
-    //   if (!error) {
-    //
-    //     acMember.updateOne({
-    //         id: x,
-    //         "sentReplacment.id": req.body.id
-    //       }, {
-    //         $set: {
-    //           "sentReplacment.$.status": "Rejected"
-    //         }
-    //       },
-    //       function(err, result) {
-    //         if (err) {
-    //           res.send(err);
-    //           error = true;
-    //         }
-    //
-    //       })
-    //   }
-    //
-    // return  res.send("Rejection done");
-    // }
-    //   catch {
-    //       return res.send("Error")
-    //   }
+
   }) //done
 
   app.post("/replacmentAcceptance", authanticateToken, async function (req, res) {
@@ -3658,6 +3696,7 @@ async function findC() {
                     return res.send("Can't find the data ")
                   } else {
                     let arr = JSON.parse(JSON.stringify(foundUser.sentReplacment));
+                    foundUser.notification.push({status:"Accepted",id:req.body.id,route:"/ViewSentReplacment"});
                     for (let i = 0; i < arr.length; i++) {
                       if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                         arr[i].status = "Accepted";
@@ -3665,7 +3704,6 @@ async function findC() {
                     }
                     foundUser.sentReplacment = arr;
                     foundUser.save();
-                    console.log("updated sender");
                   }
                 })
 
@@ -3691,7 +3729,6 @@ async function findC() {
             }
             foundUser.receivedReplacment = arr;
             foundUser.save();
-            console.log("updated reciver");
           }
         })
 
@@ -3820,7 +3857,7 @@ async function findC() {
             request: req.body.request,
             slot: req.body.slot,
             day: req.body.day,
-            from: "123", // loged in id
+            from: req.userID, // loged in id
             course: req.body.course,
             status: "Pending",
             id: reqID
@@ -3833,9 +3870,71 @@ async function findC() {
         }
       })
     }
+
     if (!error) {
       acMember.findOneAndUpdate({
-        id: '123' // loged in id
+        id: x
+      }, {
+        $push: {
+          slotLinkingReceivedRequests: {
+            route: "/ViewReceivedSlotLinking",
+            status: "Pending",
+            id: reqID
+          }
+        }
+      }, function (err) {
+        if (err) {
+          error = true;
+          res.send(err);
+        }
+      })
+    }
+
+    if (!error) {
+      acMember.findOneAndUpdate({
+        id: x
+      }, {
+        $push: {
+          slotLinkingReceivedRequests: {
+            request: req.body.request,
+            slot: req.body.slot,
+            day: req.body.day,
+            from: req.userID, // loged in id
+            course: req.body.course,
+            status: "Pending",
+            id: reqID
+          }
+        }
+      }, function (err) {
+        if (err) {
+          error = true;
+          res.send(err);
+        }
+      })
+    }
+
+    if (!error) {
+      acMember.findOneAndUpdate({
+        id: x
+      }, {
+        $push: {
+          notification: {
+            route:"/ViewReceivedSlotLinking",
+            status: "Pending",
+            id: reqID
+          }
+        }
+      }, function (err) {
+        if (err) {
+          error = true;
+          res.send(err);
+        }
+      })
+    }
+
+    if (!error) {
+      acMember.findOneAndUpdate({
+        id: req.userID // loged in id
       }, {
         $push: {
           slotLinkingSentRequests: {
@@ -3874,7 +3973,7 @@ async function findC() {
       var mycourse = "";
       var zz;
       zz = await acMember.findOne({
-        id: "123" //loged in id
+        id: req.userID //loged in id
       }, function (err, result) {
         if (err) {
           error = true;
@@ -3882,6 +3981,11 @@ async function findC() {
         }
       })
       mycourse = zz.course;
+
+      if(mycourse==""){
+        return res.send("You can't send the request ");
+      }
+
       if (!error) {
         zz = undefined;
         zz = await course.find({
@@ -3893,7 +3997,7 @@ async function findC() {
           }
         })
       }
-      if (zz[0].ta.includes("123")) { // loged in id
+      if (zz[0].ta.includes(req.userID)) { // loged in id
 
         hod = await department.findOne({
           name: zz[0].department
@@ -3905,7 +4009,9 @@ async function findC() {
         })
         hod = hod.head;
       }
-
+      else{
+          return res.send("You can't send the request ");
+      }
       var reqFound = "";
       if (req.body.hasOwnProperty("reason")) {
         reqFound = req.body.reason;
@@ -3919,7 +4025,7 @@ async function findC() {
             receivedDayoffRequest: {
               reason: reqFound,
               day: req.body.day,
-              from: "123", // loged in id
+              from: req.userID, // loged in id
               status: "Pending",
               id: reqID
             }
@@ -3927,14 +4033,33 @@ async function findC() {
         }, function (err) {
           if (err) {
             error = true;
-            res.send(err);
+          return  res.send(err);
           }
         })
       }
 
       if (!error) {
         acMember.findOneAndUpdate({
-          id: '123' // loged in id
+          id: hod
+        }, {
+          $push: {
+            notification: {
+              route:"/ViewReceivedDayOffRequest",
+              status: "Pending",
+              id: reqID
+            }
+          }
+        }, function (err) {
+          if (err) {
+            error = true;
+          return  res.send(err);
+          }
+        })
+      }
+
+      if (!error) {
+        acMember.findOneAndUpdate({
+          id: req.userID // loged in id
         }, {
           $push: {
             sentDayoffRequest: {
@@ -3947,13 +4072,13 @@ async function findC() {
         }, function (err) {
           if (err) {
             error = true;
-            res.send(err);
+          return  res.send(err);
           }
         });
 
       }
       if (!error)
-        res.send("dayoff change request SENT");
+      return  res.send("dayoff change request SENT");
     }
     catch {
       return res.send("ERROR");
@@ -3976,7 +4101,7 @@ async function findC() {
       var mycourse = "";
       var zz;
       zz = await acMember.findOne({
-        id: "123" //loged in id
+        id: req.userID //loged in id
       }, function (err, result) {
         if (err) {
           error = true;
@@ -3984,6 +4109,9 @@ async function findC() {
         }
       })
       mycourse = zz.course;
+      if(mycourse=="" || (req.body.type=="Maternity"&& zz.gender=="male")){
+        return res.send("You can't send the request ");
+      }
       if (!error) {
         zz = undefined;
         zz = await course.find({
@@ -3995,7 +4123,7 @@ async function findC() {
           }
         })
       }
-      if (zz[0].ta.includes("123")) { // loged in id
+      if (zz[0].ta.includes(req.userID)) { // loged in id
 
         hod = await department.findOne({
           name: zz[0].department
@@ -4007,13 +4135,16 @@ async function findC() {
         })
         hod = hod.head;
       }
+      else{
+          return res.send("You can't send the request ");
+      }
 
       var reqFound = "";
       if (req.body.hasOwnProperty("reason")) {
         reqFound = req.body.reason;
       } else {
         if (req.body.type === "Compensation") {
-          res.send("ERROR Compensation request must have a reason ")
+          return res.send("ERROR Compensation request must have a reason ")
           error = true;
         }
       }
@@ -4025,10 +4156,10 @@ async function findC() {
         }, {
           $push: {
             receivedLeavefRequest: {
-              date: new Date(req.body.year + "-" + req.body.month + "-" + req.body.day),
+              date: new Date(req.body.date),
               type: req.body.type,
               reason: reqFound,
-              from: "123", // loged in id
+              from: req.userID, // loged in id
               status: "Pending",
               id: reqID
             }
@@ -4043,14 +4174,32 @@ async function findC() {
 
       if (!error) {
         acMember.findOneAndUpdate({
-          id: '123' // loged in id
+          id: hod
+        }, {
+          $push: {
+            receivedLeavefRequest: {
+              route:"/ViewReceivedLeaveRequest",
+              status: "Pending",
+              id: reqID
+            }
+          }
+        }, function (err) {
+          if (err) {
+            error = true;
+            res.send(err);
+          }
+        })
+      }
+
+      if (!error) {
+        acMember.findOneAndUpdate({
+          id: req.userID // loged in id
         }, {
           $push: {
             sentLeaveRequest: {
-              date: new Date(req.body.year + "-" + req.body.month + "-" + req.body.day),
+              date: new Date(req.body.date),
               type: req.body.type,
               reason: reqFound,
-              day: req.body.day,
               status: "Pending",
               id: reqID
             }
@@ -4074,7 +4223,7 @@ async function findC() {
 
   app.get("/viewReceivedSlotLinkingRequest", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4089,7 +4238,7 @@ async function findC() {
 
   app.get("/viewSentSlotLinkingRequests", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4104,7 +4253,7 @@ async function findC() {
 
   app.get("/viewReceivedReplacment", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4119,7 +4268,7 @@ async function findC() {
 
   app.get("/viewSentReplacment", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4134,7 +4283,7 @@ async function findC() {
 
   app.get("/viewReceivedDayOffRequest", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4149,7 +4298,7 @@ async function findC() {
 
   app.get("/viewSentDayOffRequest", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4164,7 +4313,7 @@ async function findC() {
 
   app.get("/viewReceivedLeaveRequest", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4177,9 +4326,11 @@ async function findC() {
     })
   })
 
+
+
   app.get("/viewSentLeaveRequest", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123" // id of loged in user
+      id: req.userID // id of loged in user
     }, function (err, result) {
       if (err)
         res.send(err);
@@ -4192,9 +4343,9 @@ async function findC() {
     })
   })
 
-  app.get("/viewReceivedSlotLinkingRequest/:status", authanticateToken, function (req, res) {
+  app.get("/viewReceivedSlotLinkingRequest/:status",  function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "slotLinkingReceivedRequests.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4202,15 +4353,23 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].slotLinkingReceivedRequests);
+        else{
+          var ans=[];
+          result[0].slotLinkingReceivedRequests.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
-  app.get("/viewSentSlotLinkingRequests/:status", authanticateToken, function (req, res) {
+  app.get("/viewSentSlotLinkingRequests/:status",function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "slotLinkingSentRequests.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4218,15 +4377,23 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].slotLinkingSentRequests);
+        else{
+          var ans=[];
+          result[0].slotLinkingSentRequests.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
   app.get("/viewReceivedReplacment/:status", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "receivedReplacment.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4235,15 +4402,23 @@ async function findC() {
         // console.log(result.receivedReplacment);
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].receivedReplacment);
+        else{
+          var ans=[];
+          result[0].receivedReplacment.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
   app.get("/viewSentReplacment/:status", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "sentReplacment.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4251,15 +4426,23 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].sentReplacment);
+        else{
+          var ans=[];
+          result[0].sentReplacment.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
   app.get("/viewReceivedDayOffRequest/:status", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "receivedDayoffRequest.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4267,15 +4450,23 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].receivedDayoffRequest);
+        else{
+          var ans=[];
+          result[0].receivedDayoffRequest.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
   app.get("/viewSentDayOffRequest/:status", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "sentDayoffRequest.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4283,15 +4474,23 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].sentDayoffRequest);
+        else{
+          var ans=[];
+          result[0].sentDayoffRequest.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
   app.get("/viewReceivedLeaveRequest/:status", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "receivedLeavefRequest.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4299,15 +4498,23 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].receivedLeavefRequest);
+        else{
+          var ans=[];
+          result[0].receivedLeavefRequest.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
 
   app.get("/viewSentLeaveRequest/:status", authanticateToken, function (req, res) {
     acMember.find({
-      id: "123", // id of loged in user
+      id: req.userID, // id of loged in user
       "sentLeaveRequest.status": req.params.status
     }, function (err, result) {
       if (err)
@@ -4315,11 +4522,21 @@ async function findC() {
       else {
         if (result[0] == undefined)
           res.send("No requests found");
-        else
-          res.send(result[0].sentLeaveRequest);
+        else{
+          var ans=[];
+          result[0].sentLeaveRequest.forEach(y=>{
+            if(y.status==req.params.status){
+              ans.push(y);
+            }
+          })
+          res.send(ans);
+
+        }
       }
     })
   })
+
+
 
   app.post("/getCovarge", authanticateToken, function (req, res) {
     try {
@@ -4340,12 +4557,13 @@ async function findC() {
       res.send("ERROR");
     }
   })
+
   app.post("/cancelSlotLinkingRequest", authanticateToken, async function (req, res) {
     try {
       var error = false;
 
       var x = "";
-      var logedinID = "123"; //fix
+      var logedinID = req.userID; //fix
       x = await acMember.findOne({
         id: logedinID
       }, function (err, result) {
@@ -4362,7 +4580,7 @@ async function findC() {
           to = g.to;
         }
       }
-      if (!g)
+      if (!to)
         return res.send("ERROR");
 
       acMember.findOne({
@@ -4382,7 +4600,6 @@ async function findC() {
             }
             foundUser.slotLinkingSentRequests = arr;
             foundUser.save();
-            console.log("updated sender");
           }
         })
 
@@ -4398,6 +4615,7 @@ async function findC() {
             return res.send("Can't find the date")
           } else {
             let arr = JSON.parse(JSON.stringify(foundUser.slotLinkingReceivedRequests));
+            result.notification.push({status:"Accepted",id:req.body.id,route:"/ViewReceivedSlotLinking"});
             for (let i = 0; i < arr.length; i++) {
               if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                 arr[i].status = "Canceled";
@@ -4405,12 +4623,11 @@ async function findC() {
             }
             foundUser.slotLinkingReceivedRequests = arr;
             foundUser.save();
-            console.log("updated reciver");
           }
         })
 
 
-      res.send("Done");
+    return res.send("Canceld if it is not responed");
     } catch {
       return res.send("ERROR")
     }
@@ -4420,9 +4637,8 @@ async function findC() {
 
     try {
       var error = false;
-
       var x = "";
-      var logedinID = "123"; //fix
+      var logedinID = req.userID; //fix
       x = await acMember.findOne({
         id: logedinID
       }, function (err, result) {
@@ -4437,9 +4653,7 @@ async function findC() {
       for (g of x.sentReplacment) {
         if (g.id == req.body.id) {
           to = g.to;
-        }
-      }
-      if (!g)
+          if (!to)
         return res.send("ERROR");
 
       acMember.findOne({
@@ -4449,9 +4663,10 @@ async function findC() {
           if (err) {
             res.send(err);
           } else if (!foundUser) {
-            return res.send("Can't find the date ")
+            return res.send("Can't find the data ")
           } else {
             let arr = JSON.parse(JSON.stringify(foundUser.sentReplacment));
+            foundUser.notification.push({status:"Canceled",id:req.body.id,route:"/ViewReceivedSlotLinking"});
             for (let i = 0; i < arr.length; i++) {
               if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                 arr[i].status = "Canceled";
@@ -4459,7 +4674,6 @@ async function findC() {
             }
             foundUser.sentReplacment = arr;
             foundUser.save();
-            console.log("updated sender");
           }
         })
 
@@ -4481,12 +4695,12 @@ async function findC() {
             }
             foundUser.receivedReplacment = arr;
             foundUser.save();
-            console.log("updated reciver");
           }
         })
 
-
-      res.send("Done");
+      }
+    }
+    return res.send("Canceld if it is not responed");
     } catch {
       res.send("ERROR")
     }
@@ -4498,7 +4712,7 @@ async function findC() {
       var error = false;
 
       var x = "";
-      var logedinID = "123"; //fix
+      var logedinID = req.userID; //fix
       x = await acMember.findOne({
         id: logedinID
       }, function (err, result) {
@@ -4515,7 +4729,7 @@ async function findC() {
           to = g.to;
         }
       }
-      if (!g)
+      if (!to)
         return res.send("ERROR");
 
       acMember.findOne({
@@ -4528,6 +4742,7 @@ async function findC() {
             return res.send("Can't find the date ")
           } else {
             let arr = JSON.parse(JSON.stringify(foundUser.sentDayoffRequest));
+            foundUser.notification.push({status:"Cancelled" , id : req.body.id , route:"/ViewSentDayOffRequest"});
             for (let i = 0; i < arr.length; i++) {
               if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                 arr[i].status = "Canceled";
@@ -4535,7 +4750,6 @@ async function findC() {
             }
             foundUser.sentDayoffRequest = arr;
             foundUser.save();
-            console.log("updated sender");
           }
         })
 
@@ -4557,12 +4771,11 @@ async function findC() {
             }
             foundUser.receivedDayoffRequest = arr;
             foundUser.save();
-            console.log("updated reciver");
           }
         })
 
 
-      res.send("Done");
+    return  res.send("Canceld if it is not responed");
     } catch {
       res.send("ERROR")
     }
@@ -4590,7 +4803,7 @@ async function findC() {
           to = g.to;
         }
       }
-      if (!g)
+      if (!to)
         return res.send("ERROR");
 
       acMember.findOne({
@@ -4603,6 +4816,7 @@ async function findC() {
             return res.send("Can't find the date ")
           } else {
             let arr = JSON.parse(JSON.stringify(foundUser.sentLeaveRequest));
+            foundUser.notification.push({status:"Canceled",id:req.body.id,route:"/ViewReceivedLeaveRequest"});
             for (let i = 0; i < arr.length; i++) {
               if (arr[i].status == "Pending" && arr[i].id == req.body.id) {
                 arr[i].status = "Canceled";
@@ -4637,132 +4851,10 @@ async function findC() {
         })
 
 
-      res.send("Done");
+    return  res.send("Canceld if it is not responed");
     } catch {
       res.send("ERROR")
     }
-  })
-
-  const acm = new acMember({
-    schadule: [{
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Saturday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Sunday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Monday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Thursday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Wednesday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Tuesday"
-    }],
-
-    salary: 6000,
-    password: "12x3456",
-    office: "c7.212",
-    name: "sc",
-    id: "123",
-    email: "5s34",
-    slotLinkingReceivedRequests: [{
-      request: "123-",
-      status: "Pending",
-      course: "toto",
-      from: "123",
-      day: "Sunday",
-      slot: "slot1"
-    }],
-    slotLinkingSentRequests: [{
-      request: "123-",
-      status: "Pending",
-    }],
-    coordinator: true
-  })
-
-  const cou = new course({
-    slots: [{
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Saturday"
-    },
-    {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Sunday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Monday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Thursday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Wednesday"
-    }, {
-      slot1: "free",
-      slot2: "free",
-      slot3: "free",
-      slot4: "free",
-      slot5: "free",
-      day: "Tuesday"
-    }
-    ],
-
-    instructor: ["ac-2"],
-    ta: ["ac-4"],
-    department: "csen",
-    name: "csen701",
-    coordinator: "Slim3",
-    covarge: 1.5,
-
   })
 
 }

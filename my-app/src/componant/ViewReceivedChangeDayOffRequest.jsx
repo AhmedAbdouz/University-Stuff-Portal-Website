@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import NavBar from "./NavBar.jsx";
 
-async function ViewReceivedChangeDayOffRequest(props) {
+function ViewReceivedChangeDayOffRequest(props) {
   const [data, setData] = useState([]);
   const [message, setMessage] = useState([]);
   const [id, setId] = useState([]);
@@ -20,7 +20,7 @@ async function ViewReceivedChangeDayOffRequest(props) {
     event.preventDefault();
     axios
       .post(`http://localhost:4000/accept_change_day_off_request`, {
-        id: event.target.value,
+        request_id: event.target.value,
       })
       .then(async (res) => {
         await setTimeout(async function () {
@@ -38,11 +38,13 @@ async function ViewReceivedChangeDayOffRequest(props) {
       });
   }
 
+
  async function handleReject(event) {
     event.preventDefault();
+    console.log(event.target.value+"7777777777");
     axios
       .post(`http://localhost:4000/reject_change_day_off_request`, {
-        id: event.target.value,
+        request_id: event.target.value,
       })
       .then(async (res) => {
         await setTimeout(async function () {
@@ -68,8 +70,9 @@ async function ViewReceivedChangeDayOffRequest(props) {
         <thead>
           <tr>
             <th scope="col">#</th>
+            <th scope="col">Id</th>
             <th scope="col">reason</th>
-            <th scope="col">date</th>
+            <th scope="col">day</th>
             <th scope="col">status</th>
             <th scope="col">from</th>
             {(props.status == "Pending" || props.status == "") && (
@@ -89,14 +92,15 @@ async function ViewReceivedChangeDayOffRequest(props) {
             return (
               <tr>
                 <th scope="row">{idx + 1}</th>
+                <td>{y.id}</td>
                 <td>{y.reason}</td>
-                <td>{y.date}</td>
+                <td>{y.day}</td>
                 <td>{y.status}</td>
                 <td>{y.from}</td>
-                {(props.status == "Pending" || props.status == "") && (
+                {(y.status == "Pending" || y.status == "") && (
                   <td> {y.id == id ? "   " + message : ""}</td>
                 )}
-                {(props.status == "Pending" || props.status == "") && (
+                {(y.status == "Pending" || y.status == "") && (
                   <td>
                     {" "}
                     <button
@@ -109,12 +113,13 @@ async function ViewReceivedChangeDayOffRequest(props) {
                     </button>
                   </td>
                 )}
-                {(props.status == "Pending" || props.status == "") && (
+                {(y.status == "Pending" || y.status == "") && (
                   <td>
                     <button
                       type="button"
                       className="btn btn-outline-danger"
                       onClick={handleReject}
+                      value={y.id}
                     >
                       Reject
                     </button>

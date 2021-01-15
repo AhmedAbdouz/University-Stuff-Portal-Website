@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import NavBar from "./NavBar";
 import { useHistory } from "react-router-dom";
+axios.defaults.withCredentials = true;
 
 export default function AddSlot() {
   const history = useHistory();

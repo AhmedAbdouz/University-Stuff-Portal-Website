@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom";
 import NavBar from "./NavBar";
 
 
-export default function App() {
+function AssignCoordinator() {
     const history=useHistory();
 
     let [coordinator_id, setcoordinator_id] = useState("");
@@ -25,8 +25,7 @@ export default function App() {
         course_name:course_name,
     }
 
-    function handleAddInstructor(event) {
-        event.preventDefault();
+    function handleassigncoordinator() {
         axios.post(`http://localhost:4000/assign_course_coordinator`, postAssignCoordinator)
         .then(res => {
             console.log(postAssignCoordinator);
@@ -46,21 +45,32 @@ export default function App() {
     return (
         <div className="App">
             <NavBar />
-            <form onSubmit = {handleAddInstructor}>
                 <div className="row">
                     <div className="col-lg">
+                    <label >please enter the id of the staff member</label>
                         <input type="text" className="form-control" name="coordinator_id" value={coordinator_id} onChange={handleChange} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-lg">
+                    <label >please enter the name of the course</label>
+
                         <input type="text" className="form-control" name="course_name"  value={course_name} onChange={handleChange} />
                     </div>
                 </div>
-
+                <div>
+        <button
+          type="button"
+          className="btn btn-outline-danger"
+          onClick={handleassigncoordinator}
+        >
+                Assign Coordinator 
+                    </button>
+      </div>
                
-            </form>
+            
         </div>
     );
 
 }
+export default AssignCoordinator;

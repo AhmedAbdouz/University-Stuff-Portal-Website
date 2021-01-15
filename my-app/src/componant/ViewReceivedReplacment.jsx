@@ -45,10 +45,11 @@ function ReceivedReplacment(props) {
         id: event.target.value,
       })
       .then(async (res) => {
+        console.log("sadasdasd");
         await setTimeout(async function () {
           // Whatever you want to do after the wait
           var x = await axios.get(
-            `http://localhost:4000/viewSentReplacment/` + props.status
+            `http://localhost:4000/viewReceivedReplacment/` + props.status
           );
           if (x.data != "No requests found") setData(x.data);
           setMessage(res.data);
@@ -121,6 +122,7 @@ function ReceivedReplacment(props) {
                       type="button"
                       className="btn btn-outline-danger"
                       onClick={handleReject}
+                      value={y.id}
                     >
                       Reject
                     </button>

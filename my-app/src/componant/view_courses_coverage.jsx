@@ -12,14 +12,36 @@ function View_course_coverage() {
         setcourse(event.target.value);
     };
 
-    function handlecoursecoverage(event) {
+   async function handlecoursecoverage(event) {
         event.preventDefault();
-        var x = axios.get(`http://localhost:4000/view_depart_courses_coverage/` + { course_name: event.target.value }
-        ); if (x.data != "No Staff found")
+        var x = await axios.post(`http://localhost:4000/view_depart_courses_coverage/` , { course_name: event.target.value }
+        ); if (x.data != "No Staff found"){
+
             setData(x.data);
-        return (
-            <div>
-                <NavBar />
+            console.log(data);
+        }        
+    }
+
+    return (
+
+        <div className="App">
+            <NavBar />
+                <div className="row">
+                    <div className="col-lg">
+                        <input type="text" className="form-control" name="Course name" value={course} onChange={handleChange} />
+                    </div>
+                </div>
+                <div>
+        <button
+          type="button"
+          className="btn btn-outline-danger"
+          onClick={handlecoursecoverage}
+          value={course}
+        >
+          View Course Coverage
+                    </button>
+      </div>
+      <div>
                 <h3 style={{ textAlign: "center" }}>Coverage of The course</h3>
                 <table className="table">
                     <thead>
@@ -34,25 +56,9 @@ function View_course_coverage() {
                             <td>{course}</td>
                             <td>{data}</td>
                         </tr>
-                            );
-
                     </tbody>
                 </table>
             </div>
-        );
-    }
-
-    return (
-
-        <div className="App">
-            <NavBar />
-            <form onSubmit={handlecoursecoverage}>
-                <div className="row">
-                    <div className="col-lg">
-                        <input type="text" className="form-control" name="Course name" value={course} onChange={handleChange} />
-                    </div>
-                </div>
-            </form>
         </div>
 
     );

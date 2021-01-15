@@ -7,29 +7,31 @@ import NavBar from "./NavBar";
 export default function App() {
     const history=useHistory();
 
-    let [id, setid] = useState("");
-    let [course_name,setcourse_name]=useState("");
+    let [idd, setidd] = useState("");
+    let [course_nam,setcourse_nam]=useState("");
 
     function handleChange(event) {
         if (event.target.name == "id")
-            setid(event.target.value);
+            setidd(event.target.value);
         else if (event.target.name == "course_name")
-            setcourse_name(event.target.value);
+            setcourse_nam(event.target.value);
         
         };
 
     
 
-    let postdeleteInstructor = {
-        id:id,
-        course_name:course_name,
+    let deletedeleteInstructor = {
+        id:idd,
+        course_name:course_nam,
     }
 
     function handleDeleteInstructor(event) {
         event.preventDefault();
-        axios.delete(`http://localhost:4000/delete_instructor`, postdeleteInstructor)
+        console.log(deletedeleteInstructor);
+
+        axios.post(`http://localhost:4000/delete_instructor`, deletedeleteInstructor)
         .then(res => {
-            console.log(postdeleteInstructor);
+            console.log(res.data);
             if (res.data == "deleted") {  
                 console.log("Ins deleted successfully");
             }
@@ -48,23 +50,34 @@ export default function App() {
     return (
         <div className="App">
             <NavBar />
-            <form onSubmit = {handleDeleteInstructor}>
+           
                 <div className="row">
                     <div className="col-lg">
                     <label>ID of The Instructor</label>
-                        <input type="text" className="form-control" name="id" placeholder="ID" value={id} onChange={handleChange} />
+                        <input type="text" className="form-control" name="id" placeholder="ID" value={idd} onChange={handleChange} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-lg">
                     <label>The Course Name</label>
                         <input type="text" className="form-control" name="course_name" placeholder="Course_name" 
-                        value={course_name} onChange={handleChange} />
+                        value={course_nam} onChange={handleChange} />
                     </div>
                 </div>
+                <div>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger"
+                      onClick={handleDeleteInstructor}
+                      value={idd}
+                    >
+                      Delete Instructor
+                    </button>
+                  </div>
+
 
                
-            </form>
+            
         </div>
     );
 
