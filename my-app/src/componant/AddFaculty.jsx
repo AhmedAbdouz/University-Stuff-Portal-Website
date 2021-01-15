@@ -43,7 +43,7 @@ export default function App() {
 
     return (
         <div className="App">
-            {/* <NavBar /> */}
+            <NavBar />
             <form onSubmit={handleAddFaculty}>
                 <div className="row">
                     <div className="col-lg">

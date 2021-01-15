@@ -22,10 +22,7 @@ export default function App() {
         event.preventDefault();
         // console.log("hello how are you?");
         // history.push("/login");
-        axios.delete('http://localhost:4000/hr/deletefaculty', {
-            headers: {},
-            data: Del
-        })
+        axios.post('http://localhost:4000/hr/deletefaculty',Del)
             .then(res => {
                 console.log(res.data);
                 if (res.data == "Not HR") {  // needs to change the password and delete his authantication 

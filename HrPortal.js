@@ -11,6 +11,8 @@ const course = require('./course.js');
 const bcryptjs = require('bcryptjs');
 const AcMem = require('./AcMember.js');
 const e = require('express');
+const jwt = require("jsonwebtoken");
+
 
 Router.use(express.json());
 
@@ -67,7 +69,7 @@ Router.post('/addlocation', authanticateToken, async function (req, res) {
 })
 
 //location deleting
-Router.delete('/deletelocation', authanticateToken, async function (req, res) {
+Router.post('/deletelocation', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -144,7 +146,7 @@ Router.post('/addfaculty', authanticateToken, async function (req, res) {
 })
 
 //faculty deleting
-Router.delete('/deletefaculty', authanticateToken, async function (req, res) {
+Router.post('/deletefaculty', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -238,7 +240,7 @@ Router.post('/addDepartment', authanticateToken, async function (req, res) {
 
 
 //department deleting
-Router.delete('/deletedepartment', authanticateToken, async function (req, res) {
+Router.post('/deletedepartment', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -383,7 +385,7 @@ Router.post('/addcourse', authanticateToken, async function (req, res) {
 })
 
 //Course deleting
-Router.delete('/deletecourse', authanticateToken, async function (req, res) {
+Router.post('/deletecourse', authanticateToken, async function (req, res) {
 
   if (!check(req.userID)) {
     res.send("Not HR");
@@ -475,7 +477,7 @@ Router.put('/updatecourse', authanticateToken, async function (req, res) {
 
 //tested
 //delete stuff
-Router.delete('/deletestuff', authanticateToken, async (req, res) => {
+Router.post('/deletestuff', authanticateToken, async (req, res) => {
   if (!check(req.userID))
     res.send("NOTHR");
 
