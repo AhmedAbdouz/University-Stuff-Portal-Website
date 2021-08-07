@@ -4,7 +4,7 @@
 
 ## server listen to 3000
 
-## all date needed for the routes will be passed as 
+## all date needed for the routes will be passed as
     -params in the link ex ( " http://localhost:3000/:memberID " ) 
     -in the body with row json format 
     ex {
